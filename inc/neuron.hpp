@@ -10,8 +10,6 @@ public:
     double outputVal;
     connection *connectionsIn;
     u_int32_t ctConnectionsIn;
-    // connection *connectionsOut;
-    // u_int32_t ctConnectionsOut;
     void updateInput()
     {
         inputVal = 0.0;
@@ -20,25 +18,24 @@ public:
             connectionsIn[i].feedThrough();
         }
     }
+    double sigmoid(double x)
+    {
+        return 1.0 / (1.0 + exp(-x));
+    }
     void activation()
     {
-        outputVal = 1.0 / (1.0 + exp(-inputVal));
+        outputVal = sigmoid(inputVal);
     }
-    // void updateOutput()
-    // {
-    //     for (int i = 0; i < ctConnectionsOut; i++)
-    //     {
-    //         connectionsOut[i].setInput(outputVal);
-    //     }
-    // }
+    double derivative()
+    {
+        return sigmoid(inputVal) * (1.0 - sigmoid(inputVal));
+    }
     Neuron()
     {
         this->inputVal = 0.0;
         this->outputVal = 0.0;
         this->connectionsIn = nullptr;
         this->ctConnectionsIn = 0;
-        // this->connectionsOut = nullptr;
-        // this->ctConnectionsOut = 0;
     }
 
     void setInput(double inputVal)
@@ -53,6 +50,5 @@ public:
     {
         updateInput();
         activation();
-        // updateOutput();
     }
 };
