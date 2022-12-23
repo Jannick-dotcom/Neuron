@@ -8,14 +8,20 @@ class Neuron
 public:
     double inputVal;
     double outputVal;
+    double bias;
+    double gradientBias;
+    double gradientWeights;
     connection *connectionsIn;
     u_int32_t ctConnectionsIn;
     void updateInput()
     {
-        inputVal = 0.0;
-        for (int i = 0; i < ctConnectionsIn; i++)
+        if(connectionsIn != nullptr)
         {
-            connectionsIn[i].feedThrough();
+            inputVal = 0.0;
+            for (int i = 0; i < ctConnectionsIn; i++)
+            {
+                connectionsIn[i].feedThrough();
+            }
         }
     }
     double sigmoid(double x)
@@ -24,7 +30,7 @@ public:
     }
     void activation()
     {
-        outputVal = sigmoid(inputVal);
+        outputVal = sigmoid(inputVal + bias);
     }
     double derivative()
     {
@@ -34,8 +40,11 @@ public:
     {
         this->inputVal = 0.0;
         this->outputVal = 0.0;
+        this->bias = 0.0;
         this->connectionsIn = nullptr;
         this->ctConnectionsIn = 0;
+        this->gradientBias = 1;
+        this->gradientWeights = 1;
     }
 
     void setInput(double inputVal)
@@ -49,6 +58,8 @@ public:
     void feedThrough()
     {
         updateInput();
+        gradientBias = 1;
+        gradientWeights = 1;
         activation();
     }
 };

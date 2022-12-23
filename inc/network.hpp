@@ -57,12 +57,66 @@ public:
 
         for(u_int16_t i = 0; i < firstLayer->ctNeurons; i++)
         {
-            firstLayer->neurons[i].outputVal = data.inputs[i];
+            firstLayer->neurons[i].inputVal = data.inputs[i];
         }
         while(currentLayer != nullptr)
         {
             currentLayer->feedThrough();
             currentLayer = currentLayer->nextLayer;
         }
+    }
+    void clearGradients()
+    {
+        Layer *currentLayer = firstLayer;
+        while(currentLayer != nullptr)
+        {
+            for(u_int16_t i = 0; i < currentLayer->ctNeurons; i++)
+            {
+                currentLayer->neurons[i].gradientBias = 1;
+                for(u_int16_t j = 0; j < currentLayer->neurons[i].ctConnectionsIn; j++)
+                {
+                    currentLayer->neurons[i].gradientWeights = 1;
+                }
+            }
+            currentLayer = currentLayer->nextLayer;
+        }
+    }
+    double sigmoid(double x)
+    {
+        return 1.0 / (1.0 + exp(-x));
+    }
+
+    double dcost_dout(double expected, double actual)
+    {
+        return 2.0*(actual - expected);
+    }
+    double dOut_dWin(double w_in)
+    {
+        return sigmoid(w_in) * (1 - sigmoid(w_in));
+    }
+    double dWin_dW(double weight)
+    {
+        return weight;
+    }
+    double dWin_dB(double bias)
+    {
+        return 1;
+    }
+    void updateWeightsAndBiases(double learnRate)
+    {
+        Layer *currentLayer = firstLayer;
+        while(currentLayer != nullptr)
+        {
+            for(u_int16_t i = 0; i < currentLayer->ctNeurons; i++)
+            {
+                currentLayer->neurons[i].bias -= learnRate * currentLayer->neurons[i].gradientBias;
+                for(u_int16_t j = 0; j < currentLayer->neurons[i].ctConnectionsIn; j++)
+                {
+                    currentLayer->neurons[i].connectionsIn[j].weight -= learnRate * currentLayer->neurons[i].gradientWeights;
+                }
+            }
+            currentLayer = currentLayer->nextLayer;
+        }
+        clearGradients();
     }
 };
