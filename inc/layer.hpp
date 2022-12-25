@@ -27,11 +27,11 @@ public:
                 {
                     neurons[i].connectionsIn[neurPrevLayer].inputVal = &prevLayer->neurons[neurPrevLayer].outputVal; //set start of connection to previous layer's neuron
                     neurons[i].connectionsIn[neurPrevLayer].outputVal = &neurons[i].inputVal; //set end of connection to current layer's neuron
-                    neurons[i].connectionsIn[neurPrevLayer].weight = rand() / double(RAND_MAX) - 0.5; //set weight of connection to random value between 0 and 1
+                    neurons[i].connectionsIn[neurPrevLayer].weight = 0;//rand() / double(RAND_MAX) - 0.5; //set weight of connection to random value between 0 and 1
                     neurons[i].connectionsIn[neurPrevLayer].fromNeuron = &prevLayer->neurons[neurPrevLayer];
                     neurons[i].connectionsIn[neurPrevLayer].toNeuron = &neurons[i];
-                    neurons[i].bias = 0;//rand() / double(RAND_MAX) - 0.5; //set bias of connection to random value between 0 and 1
                 }
+                neurons[i].bias = 0;//rand() / double(RAND_MAX) - 0.5; //set bias of connection to random value between 0 and 1
             }
         }
         else

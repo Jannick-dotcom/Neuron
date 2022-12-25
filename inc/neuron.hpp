@@ -9,8 +9,7 @@ public:
     double inputVal;
     double outputVal;
     double bias;
-    double gradientBias;
-    double gradientWeights;
+    double gradient;
     connection *connectionsIn;
     u_int32_t ctConnectionsIn;
     void updateInput()
@@ -43,8 +42,7 @@ public:
         this->bias = 0.0;
         this->connectionsIn = nullptr;
         this->ctConnectionsIn = 0;
-        this->gradientBias = 1;
-        this->gradientWeights = 1;
+        this->gradient = 0;
     }
 
     void setInput(double inputVal)
@@ -58,8 +56,6 @@ public:
     void feedThrough()
     {
         updateInput();
-        gradientBias = 1;
-        gradientWeights = 1;
         activation();
     }
 };
