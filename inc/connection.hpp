@@ -28,12 +28,4 @@ public:
     {
         *outputVal += *inputVal * weight;
     }
-    double derivativeBias()
-    {
-        return 1;
-    }
-    double derivativeWeight()
-    {
-        return *inputVal;
-    }
 };
