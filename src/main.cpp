@@ -1,54 +1,71 @@
 #include "network.hpp"
 #include <iostream>
 #include <random>
+#include "cost.hpp"
 
-double possibleCombinations[7][2] = {{0,0},{0,1},{1,0},{1,1},{0,0},{0,1},{1,0}};
+dataPoint points;
 
-void printLayer(Layer *layer)
+Sigmoid sigmoid;
+ReLU relu;
+Softmax softmax;
+// Tanh tanh;
+LeakyReLU leakyReLU;
+Linear linear;
+
+CrossEntropyCost crossEntropy;
+QuadraticCost MSE;
+ExponentialCost exponential;
+
+
+double possibleCombinations[1000][2];
+
+int main()
 {
-    for (u_int32_t i = 0; i < layer->ctNeurons; i++)
+    for(uint16_t i = 0; i < sizeof(possibleCombinations) / sizeof(possibleCombinations[0]); i++)
     {
-        std::cout << layer->neurons[i].outputVal << std::endl;
+        possibleCombinations[i][0] = (i % 100) / 100.0;
+        possibleCombinations[i][1] = (i % 100) / 100.0;
     }
-    std::cout << std::endl;
-}
-
-int main(){
-    double cost = 0;
-    dataPoint points;
-    Network *net = new Network();
-    Layer *first = net->addLayer(2);
-    Layer *middle = net->addLayer(3);
-    Layer *last = net->addLayer(1); 
+    Network *net = new Network(&MSE);
+    Layer *first = net->addLayer(2, &linear);
+    net->addLayer(30, &sigmoid);
+    net->addLayer(30, &relu);
+    Layer *last = net->addLayer(1, &sigmoid);
     points.inputs = new double[first->ctNeurons];
     points.expectedOutputs = new double[last->ctNeurons];
-    for(uint32_t l = 0; l<100000; l++)
+    double learningRate = 0.0001;
+    double lastCost = 0;
+    do
     {
-        cost = 0;
-        points.inputs[0] = rand() % 2;
-        points.inputs[1] = rand() % 2;
-        points.expectedOutputs[0] = points.inputs[0] && points.inputs[1];
-        
+        lastCost = net->cost;
+        net->cost = 0;
+        for (uint16_t i = 0; i < sizeof(possibleCombinations) / sizeof(possibleCombinations[0]); i++)
+        {
+            points.inputs[0] = possibleCombinations[i][0];
+            points.inputs[1] = possibleCombinations[i][1];
+            points.expectedOutputs[0] = 1;//int(round(points.inputs[0])) || int(round(points.inputs[1]));
+
+            net->feedThrough(points);
+            net->learn(points.expectedOutputs);
+        }
+        // std::system("clear");
+        // net->print();
+        std::cout << "\rCost: " << net->cost << std::flush;
+        if(net->cost < 0.005)
+        {
+            break;
+        }
+        net->updateWeightsAndBiases(learningRate);
+    } while(net->cost > 0.005);
+    std::cout << std::endl;
+    for(uint16_t i = 0; i < sizeof(possibleCombinations) / sizeof(possibleCombinations[0]); i++)
+    {
+        points.inputs[0] = possibleCombinations[i][0];
+        points.inputs[1] = possibleCombinations[i][1];
+        points.expectedOutputs[0] = int(round(points.inputs[0])) && int(round(points.inputs[1]));
         net->feedThrough(points);
-        net->learn(points.expectedOutputs);
-        net->updateWeightsAndBiases(0.01);
+        std::cout << "Input: " << points.inputs[0] << " " << points.inputs[1] << " Expected: " << points.expectedOutputs[0] << " Output: " << last->neurons[0].outputVal << std::endl;
     }
-    points.inputs[0] = 1;
-    points.inputs[1] = 0;
-    net->feedThrough(points);
-    std::cout << "0 1 -> " << last->neurons[0].outputVal << std::endl;
-    points.inputs[0] = 0;
-    points.inputs[1] = 1;
-    net->feedThrough(points);
-    std::cout << "1 0 -> " << last->neurons[0].outputVal << std::endl;
-    points.inputs[0] = 0;
-    points.inputs[1] = 0;
-    net->feedThrough(points);
-    std::cout << "0 0 -> " << last->neurons[0].outputVal << std::endl;
-    points.inputs[0] = 1;
-    points.inputs[1] = 1;
-    net->feedThrough(points);
-    std::cout << "1 1 -> " << last->neurons[0].outputVal << std::endl;
     delete[] points.inputs;
     delete[] points.expectedOutputs;
     delete net;

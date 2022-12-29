@@ -4,6 +4,7 @@
 #include "connection.hpp"
 #include "layer.hpp"
 #include "dataPoint.hpp"
+#include "cost.hpp"
 
 typedef unsigned short uint16_t;
 
@@ -12,10 +13,13 @@ class Network
 public:
     Layer *firstLayer;
     uint16_t ctLayers;
-    Network()
+    double cost;
+    Cost *costFunction;
+    Network(Cost *costFunction)
     {
         this->firstLayer = nullptr;
         this->ctLayers = 0;
+        this->costFunction = costFunction;
     }
     ~Network()
     {
@@ -28,11 +32,11 @@ public:
         }
     }
 
-    Layer *addLayer(long ctNeurons)
+    Layer *addLayer(long ctNeurons, ActivationFunction *activationFunction)
     {
         if(firstLayer == nullptr || ctLayers == 0)
         {
-            firstLayer = new Layer(ctNeurons, nullptr);
+            firstLayer = new Layer(ctNeurons, nullptr, activationFunction);
             ctLayers++;
             return firstLayer;
         }
@@ -43,7 +47,7 @@ public:
             {
                 currentLayer = currentLayer->nextLayer;
             }
-            currentLayer->nextLayer = new Layer(ctNeurons, currentLayer);
+            currentLayer->nextLayer = new Layer(ctNeurons, currentLayer, activationFunction);
             ctLayers++;
             return currentLayer->nextLayer;
         }
@@ -74,27 +78,25 @@ public:
         {
             for(uint16_t i = 0; i < currentLayer->ctNeurons; i++)
             {
-                currentLayer->neurons[i].gradient = 0;
+                currentLayer->neurons[i].gradientB = 0;
+                currentLayer->neurons[i].gradientW = 0;
             }
             currentLayer = currentLayer->nextLayer;
         }
     }
-    double sigmoid(double x)
-    {
-        return 1.0 / (1.0 + exp(-x));
-    }
+    
     double nodeCost(double output, double target)
     {
-        return pow((output - target), 2); // return squared error
+        return costFunction->cost(output, target);
     }
 
     double dcost_dout(double expected, double actual)
     {
-        return 2.0*(actual - expected);
+        return costFunction->costDerivative(actual, expected);
     }
-    double dOut_dWin(double w_in)
+    double dOut_dWin(Neuron n, double w_in)
     {
-        return sigmoid(w_in) * (1 - sigmoid(w_in));
+        return n.activationFunction->derivative(w_in);
     }
     double dWin_dW(double input)
     {
@@ -111,15 +113,15 @@ public:
     
     void updateWeightsAndBiases(double learnRate)
     {
-        Layer *currentLayer = firstLayer;
+        Layer *currentLayer = firstLayer->nextLayer;
         while(currentLayer != nullptr)
         {
             for(uint16_t i = 0; i < currentLayer->ctNeurons; i++)
             {
-                currentLayer->neurons[i].bias -= learnRate * currentLayer->neurons[i].gradient * dWin_dB();
+                currentLayer->neurons[i].bias -= learnRate * currentLayer->neurons[i].gradientB;// * dWin_dB();
                 for(uint16_t j = 0; j < currentLayer->neurons[i].ctConnectionsIn; j++)
                 {
-                    currentLayer->neurons[i].connectionsIn[j].weight -= learnRate * currentLayer->neurons[i].gradient * dWin_dW(*currentLayer->neurons[i].connectionsIn[j].inputVal);
+                    currentLayer->neurons[i].connectionsIn[j].weight -= learnRate * currentLayer->neurons[i].gradientW;// * dWin_dW(*currentLayer->neurons[i].connectionsIn[j].inputVal);
                 }
             }
             currentLayer = currentLayer->nextLayer;
@@ -131,25 +133,45 @@ public:
     {
         Layer *currentLayer = firstLayer;
         while(currentLayer->nextLayer != nullptr) currentLayer = currentLayer->nextLayer; //Get last layer
+        Layer *lastLayer = currentLayer;
 
-        while(currentLayer != nullptr)
+        while(currentLayer->prevLayer != nullptr)
         {
             for(uint16_t i = 0; i < currentLayer->ctNeurons; i++)
             {
                 double output = currentLayer->neurons[i].outputVal;
                 double w_in = currentLayer->neurons[i].inputVal;
+                double doutdwin = currentLayer->neurons[i].activationFunction->derivative(w_in);
 
                 if(currentLayer->nextLayer == nullptr)
                 {
-                    currentLayer->neurons[i].gradient = dcost_dout(expected[i], output) * dOut_dWin(w_in);
+                    cost += costFunction->cost(currentLayer->neurons[i].outputVal, expected[i]);
+                    currentLayer->neurons[i].gradientB = dcost_dout(expected[i], output) * dOut_dWin(currentLayer->neurons[i], w_in);
+                    currentLayer->neurons[i].gradientW = dcost_dout(expected[i], output) * dOut_dWin(currentLayer->neurons[i], w_in);
                 }
                 
                 for(uint16_t con = 0; con < currentLayer->neurons[i].ctConnectionsIn; con++)
                 {
-                    currentLayer->neurons[i].connectionsIn[con].fromNeuron->gradient += currentLayer->neurons[i].gradient * dOut_dWin(w_in) * dWin_dIn(currentLayer->neurons[i].connectionsIn[con].weight);
+                    double weight = currentLayer->neurons[i].connectionsIn[con].weight;
+                    double input = *currentLayer->neurons[i].connectionsIn[con].inputVal;
+                    currentLayer->neurons[i].connectionsIn[con].fromNeuron->gradientB += currentLayer->neurons[i].gradientB * dWin_dIn(weight) * dOut_dWin(currentLayer->neurons[i], w_in);
+                    currentLayer->neurons[i].connectionsIn[con].fromNeuron->gradientW += currentLayer->neurons[i].gradientW * dWin_dIn(weight) * dOut_dWin(currentLayer->neurons[i], w_in);
                 }
             }
             currentLayer = currentLayer->prevLayer;
+        }
+        cost = cost / lastLayer->ctNeurons;
+    }
+    void print()
+    {
+        Layer *currentLayer = firstLayer;
+        uint16_t layerNum = 0;
+        while(currentLayer != nullptr)
+        {
+            std::cout << "Layer " << layerNum << std::endl;
+            currentLayer->print();
+            currentLayer = currentLayer->nextLayer;
+            layerNum++;
         }
     }
 };

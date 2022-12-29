@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include "connection.hpp"
+#include "activationFun.hpp"
 
 class Neuron
 {
@@ -9,9 +10,11 @@ public:
     double inputVal;
     double outputVal;
     double bias;
-    double gradient;
+    double gradientW;
+    double gradientB;
     connection *connectionsIn;
     u_int32_t ctConnectionsIn;
+    ActivationFunction *activationFunction;
     void updateInput()
     {
         if(connectionsIn != nullptr)
@@ -21,28 +24,23 @@ public:
             {
                 connectionsIn[i].feedThrough();
             }
+            inputVal += bias;
         }
     }
-    double sigmoid(double x)
+    void activation(double inputVal)
     {
-        return 1.0 / (1.0 + exp(-x));
-    }
-    void activation()
-    {
-        outputVal = sigmoid(inputVal + bias);
-    }
-    double derivative()
-    {
-        return sigmoid(inputVal) * (1.0 - sigmoid(inputVal));
+        outputVal = activationFunction->operator()(inputVal);
+        // outputVal = 1.0 / (1.0 + exp(-inputVal));
     }
     Neuron()
     {
         this->inputVal = 0.0;
         this->outputVal = 0.0;
-        this->bias = 0.0;
+        this->bias = rand() / double(RAND_MAX) - 0.5;
         this->connectionsIn = nullptr;
         this->ctConnectionsIn = 0;
-        this->gradient = 0;
+        this->gradientB = 0;
+        this->gradientW = 0;
     }
 
     void setInput(double inputVal)
@@ -56,6 +54,7 @@ public:
     void feedThrough()
     {
         updateInput();
-        activation();
+        // inputVal += bias;
+        activation(inputVal);
     }
 };
