@@ -9,9 +9,7 @@ class Neuron
 public:
     double inputVal;
     double outputVal;
-    double bias;
     double gradientW;
-    double gradientB;
     connection *connectionsIn;
     u_int32_t ctConnectionsIn;
     ActivationFunction *activationFunction;
@@ -24,22 +22,18 @@ public:
             {
                 connectionsIn[i].feedThrough();
             }
-            inputVal += bias;
         }
     }
     void activation(double inputVal)
     {
-        outputVal = activationFunction->operator()(inputVal);
-        // outputVal = 1.0 / (1.0 + exp(-inputVal));
+        if(activationFunction != nullptr) outputVal = activationFunction->operator()(inputVal);
     }
     Neuron()
     {
         this->inputVal = 0.0;
         this->outputVal = 0.0;
-        this->bias = rand() / double(RAND_MAX) - 0.5;
         this->connectionsIn = nullptr;
         this->ctConnectionsIn = 0;
-        this->gradientB = 0;
         this->gradientW = 0;
     }
 
@@ -54,7 +48,6 @@ public:
     void feedThrough()
     {
         updateInput();
-        // inputVal += bias;
         activation(inputVal);
     }
 };

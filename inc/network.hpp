@@ -78,7 +78,6 @@ public:
         {
             for(uint16_t i = 0; i < currentLayer->ctNeurons; i++)
             {
-                currentLayer->neurons[i].gradientB = 0;
                 currentLayer->neurons[i].gradientW = 0;
             }
             currentLayer = currentLayer->nextLayer;
@@ -118,10 +117,9 @@ public:
         {
             for(uint16_t i = 0; i < currentLayer->ctNeurons; i++)
             {
-                currentLayer->neurons[i].bias -= learnRate * currentLayer->neurons[i].gradientB;// * dWin_dB();
                 for(uint16_t j = 0; j < currentLayer->neurons[i].ctConnectionsIn; j++)
                 {
-                    currentLayer->neurons[i].connectionsIn[j].weight -= learnRate * currentLayer->neurons[i].gradientW;// * dWin_dW(*currentLayer->neurons[i].connectionsIn[j].inputVal);
+                    currentLayer->neurons[i].connectionsIn[j].weight -= learnRate * currentLayer->neurons[i].gradientW * dWin_dW(*currentLayer->neurons[i].connectionsIn[j].inputVal);
                 }
             }
             currentLayer = currentLayer->nextLayer;
@@ -146,7 +144,6 @@ public:
                 if(currentLayer->nextLayer == nullptr)
                 {
                     cost += costFunction->cost(currentLayer->neurons[i].outputVal, expected[i]);
-                    currentLayer->neurons[i].gradientB = dcost_dout(expected[i], output) * dOut_dWin(currentLayer->neurons[i], w_in);
                     currentLayer->neurons[i].gradientW = dcost_dout(expected[i], output) * dOut_dWin(currentLayer->neurons[i], w_in);
                 }
                 
@@ -154,7 +151,6 @@ public:
                 {
                     double weight = currentLayer->neurons[i].connectionsIn[con].weight;
                     double input = *currentLayer->neurons[i].connectionsIn[con].inputVal;
-                    currentLayer->neurons[i].connectionsIn[con].fromNeuron->gradientB += currentLayer->neurons[i].gradientB * dWin_dIn(weight) * dOut_dWin(currentLayer->neurons[i], w_in);
                     currentLayer->neurons[i].connectionsIn[con].fromNeuron->gradientW += currentLayer->neurons[i].gradientW * dWin_dIn(weight) * dOut_dWin(currentLayer->neurons[i], w_in);
                 }
             }

@@ -28,35 +28,34 @@ int main()
     }
     Network *net = new Network(&MSE);
     Layer *first = net->addLayer(2, &linear);
-    net->addLayer(30, &sigmoid);
-    net->addLayer(30, &relu);
+    net->addLayer(20, &sigmoid);
+    Layer *hidden = net->addLayer(4, &sigmoid);
     Layer *last = net->addLayer(1, &sigmoid);
     points.inputs = new double[first->ctNeurons];
     points.expectedOutputs = new double[last->ctNeurons];
-    double learningRate = 0.0001;
+    double learningRate = 0.01;
     double lastCost = 0;
+    double averageCost = 0;
     do
     {
         lastCost = net->cost;
         net->cost = 0;
+        averageCost = 0;
         for (uint16_t i = 0; i < sizeof(possibleCombinations) / sizeof(possibleCombinations[0]); i++)
         {
             points.inputs[0] = possibleCombinations[i][0];
             points.inputs[1] = possibleCombinations[i][1];
-            points.expectedOutputs[0] = 1;//int(round(points.inputs[0])) || int(round(points.inputs[1]));
+            points.expectedOutputs[0] = int(round(points.inputs[0])) && int(round(points.inputs[1]));
 
             net->feedThrough(points);
             net->learn(points.expectedOutputs);
+            averageCost += net->cost;
+            net->updateWeightsAndBiases(learningRate);
         }
-        // std::system("clear");
+        std::system("clear");
         // net->print();
-        std::cout << "\rCost: " << net->cost << std::flush;
-        if(net->cost < 0.005)
-        {
-            break;
-        }
-        net->updateWeightsAndBiases(learningRate);
-    } while(net->cost > 0.005);
+        std::cout << "Cost: " << net->cost << std::endl;
+    } while(averageCost > 2);
     std::cout << std::endl;
     for(uint16_t i = 0; i < sizeof(possibleCombinations) / sizeof(possibleCombinations[0]); i++)
     {
