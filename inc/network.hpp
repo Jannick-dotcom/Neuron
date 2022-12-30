@@ -5,6 +5,7 @@
 #include "layer.hpp"
 #include "dataPoint.hpp"
 #include "cost.hpp"
+#include <fstream>
 
 typedef unsigned short uint16_t;
 
@@ -169,5 +170,20 @@ public:
             currentLayer = currentLayer->nextLayer;
             layerNum++;
         }
+    }
+    void exportNetwork(std::string fileName)
+    {
+        std::ofstream file;
+        file.open(fileName);
+        Layer *currentLayer = firstLayer;
+        uint16_t layerNum = 0;
+        while(currentLayer != nullptr)
+        {
+            file << "Layer" << layerNum << ":" << currentLayer->ctNeurons << std::endl;
+            currentLayer->exportToFile(file);
+            currentLayer = currentLayer->nextLayer;
+            layerNum++;
+        }
+        file.close();
     }
 };

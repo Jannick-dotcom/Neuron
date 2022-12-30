@@ -2,6 +2,7 @@
 #include "neuron.hpp"
 #include "connection.hpp"
 #include <iostream>
+#include <fstream>
 
 class Layer
 {
@@ -17,7 +18,7 @@ public:
         this->neurons = new Neuron[ctNeurons+1];
         this->nextLayer = nullptr;
         this->prevLayer = prevLayer;
-
+        //TODO: change code layout for input layer bias node
         if (prevLayer != nullptr)
         {
             for (u_int16_t i = 0; i < ctNeurons; i++)
@@ -46,7 +47,7 @@ public:
         }
         else
         {
-            for (int i = 0; i < ctNeurons-1; i++)
+            for (int i = 0; i < ctNeurons; i++)
             {
                 neurons[i].activationFunction = ActivationFunction;
                 neurons[i].connectionsIn = nullptr;
@@ -84,5 +85,18 @@ public:
             std::cout << i << ": " << neurons[i].inputVal << " -> " << neurons[i].outputVal << std::endl;
         }
         std::cout << std::endl;
+    }
+    void exportToFile(std::ofstream &file)
+    {
+        for (int i = 0; i < ctNeurons + 1; i++)
+        {
+            file << neurons[i].activationFunction;
+            for(int c = 0; c < neurons[i].ctConnectionsIn; c++)
+            {
+                file << ", " << neurons[i].connectionsIn[c].weight;
+            }
+            file << std::endl;
+        }
+        file << std::endl;
     }
 };
