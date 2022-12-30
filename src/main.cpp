@@ -27,12 +27,12 @@ int main()
     }
     Network *net = new Network(&MSE);
     Layer *first = net->addLayer(2, &linear);
-    net->addLayer(20, &sigmoid);
-    Layer *hidden = net->addLayer(40, &sigmoid);
+    net->addLayer(20, &softmax);
+    Layer *hidden = net->addLayer(40, &relu);
     Layer *last = net->addLayer(1, &sigmoid);
     points.inputs = new double[first->ctNeurons];
     points.expectedOutputs = new double[last->ctNeurons];
-    double learningRate = 0.00005;
+    double learningRate = 0.005;
     double lastCost = 0;
     do
     {
@@ -51,7 +51,7 @@ int main()
         std::system("clear");
         // net->print();
         std::cout << "Cost: " << net->cost << std::endl;
-    } while(net->cost > 10);
+    } while(net->cost > 1 && net->cost < lastCost || lastCost == 0);
     std::cout << std::endl;
     for(uint16_t i = 0; i < sizeof(possibleCombinations) / sizeof(possibleCombinations[0]); i++)
     {
