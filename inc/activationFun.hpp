@@ -1,11 +1,13 @@
 #pragma once
 
+#include <string>
 #include <cmath>
 
 class ActivationFunction {
 public:
     virtual double operator()(double x) = 0;
     virtual double derivative(double x) = 0;
+    std::string name;
 };
 
 class Linear : public ActivationFunction {
@@ -15,6 +17,9 @@ public:
     }
     double derivative(double x) override {
         return 1.0;
+    }
+    Linear() {
+        name = "Linear";
     }
 };
 
@@ -26,6 +31,9 @@ public:
     double derivative(double x) override {
         return (*this)(x) * (1.0 - (*this)(x));
     }
+    Sigmoid() {
+        name = "Sigmoid";
+    }
 };
 
 class Tanh : public ActivationFunction {
@@ -35,6 +43,9 @@ public:
     }
     double derivative(double x) override {
         return 1.0 - (*this)(x) * (*this)(x);
+    }
+    Tanh() {
+        name = "Tanh";
     }
 };
 
@@ -46,6 +57,9 @@ public:
     double derivative(double x) override {
         return x > 0.0 ? 1.0 : 0.0;
     }
+    ReLU() {
+        name = "ReLU";
+    }
 };
 
 class LeakyReLU : public ActivationFunction {
@@ -56,6 +70,9 @@ public:
     double derivative(double x) override {
         return x > 0.0 ? 1.0 : 0.01;
     }
+    LeakyReLU() {
+        name = "LeakyReLU";
+    }
 };
 
 class Softmax : public ActivationFunction {
@@ -65,5 +82,8 @@ public:
     }
     double derivative(double x) override {
         return 1.0;
+    }
+    Softmax() {
+        name = "Softmax";
     }
 };
