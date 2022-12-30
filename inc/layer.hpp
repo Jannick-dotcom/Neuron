@@ -90,8 +90,15 @@ public:
     {
         for (int i = 0; i < ctNeurons + 1; i++)
         {
-            file << neurons[i].activationFunction;
-            for(int c = 0; c < neurons[i].ctConnectionsIn; c++)
+            if(neurons[i].activationFunction != nullptr)
+            {
+                file << neurons[i].activationFunction->name;
+            }
+            else
+            {
+                file << "biasNeuron ";
+            }
+            for (int c = 0; c < neurons[i].ctConnectionsIn; c++)
             {
                 file << ", " << neurons[i].connectionsIn[c].weight;
             }

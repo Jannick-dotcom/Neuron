@@ -179,7 +179,7 @@ public:
         uint16_t layerNum = 0;
         while(currentLayer != nullptr)
         {
-            file << "Layer" << layerNum << ":" << currentLayer->ctNeurons << std::endl;
+            file << "Layer" << layerNum << ": " << currentLayer->ctNeurons << std::endl;
             currentLayer->exportToFile(file);
             currentLayer = currentLayer->nextLayer;
             layerNum++;
