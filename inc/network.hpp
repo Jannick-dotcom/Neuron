@@ -111,7 +111,7 @@ public:
         return weight;
     }
     
-    void updateWeightsAndBiases(double learnRate)
+    void updateWeightsAndBiases(double learnRate, double momentumFactor)
     {
         Layer *currentLayer = firstLayer->nextLayer;
         while(currentLayer != nullptr)
@@ -120,7 +120,9 @@ public:
             {
                 for(uint16_t j = 0; j < currentLayer->neurons[i].ctConnectionsIn; j++)
                 {
-                    currentLayer->neurons[i].connectionsIn[j].weight -= learnRate * currentLayer->neurons[i].gradientW * dWin_dW(*currentLayer->neurons[i].connectionsIn[j].inputVal);
+                    double weightChange = learnRate * currentLayer->neurons[i].gradientW * dWin_dW(*currentLayer->neurons[i].connectionsIn[j].inputVal);
+                    currentLayer->neurons[i].connectionsIn[j].weight -= weightChange + (currentLayer->neurons[i].connectionsIn[j].prevWeightChange * momentumFactor);
+                    currentLayer->neurons[i].connectionsIn[j].prevWeightChange += weightChange;
                 }
             }
             currentLayer = currentLayer->nextLayer;
