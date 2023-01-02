@@ -186,4 +186,142 @@ public:
         }
         file.close();
     }
+
+    void getConnections(std::string str, Layer *currentLayer)
+    {
+        uint32_t globalStart = 0;
+        uint32_t connectionIndex = 0;
+        uint32_t neuronIndex = 0;
+        Neuron *currentNeuron = currentLayer->neurons;
+        if(currentLayer->prevLayer != nullptr)
+        {
+            currentNeuron->ctConnectionsIn = currentLayer->prevLayer->ctNeurons+1;
+            currentNeuron->connectionsIn = new connection[currentNeuron->ctConnectionsIn+1];
+        }
+        else
+        {
+            return;
+        }
+
+        while(str.find(",", globalStart) < str.length())
+        {
+            uint32_t start = str.find(", ", globalStart) + 2;
+            uint32_t end = str.find(", ", start);
+            uint32_t newline = str.find("\n", start);
+            if(start < globalStart)
+            {
+                break;
+            }
+            if(newline < end)
+            {
+                end = newline;
+            }
+
+            if(start != -1 && end != -1)
+            {
+                std::string weight = str.substr(start, end - start);
+                double weightVal = std::stod(weight);
+                currentNeuron->connectionsIn[connectionIndex].weight = weightVal;
+                currentNeuron->connectionsIn[connectionIndex].fromNeuron = currentLayer->prevLayer->neurons + connectionIndex;
+                currentNeuron->connectionsIn[connectionIndex].toNeuron = currentNeuron;
+                currentNeuron->connectionsIn[connectionIndex].inputVal = &currentLayer->prevLayer->neurons[connectionIndex].outputVal;
+                currentNeuron->connectionsIn[connectionIndex].outputVal = &currentNeuron->inputVal;
+                connectionIndex++;
+                globalStart = end;
+                if(connectionIndex == currentNeuron->ctConnectionsIn)
+                {
+                    connectionIndex = 0;
+                    currentNeuron++;
+                    neuronIndex++;
+                    if(neuronIndex == currentLayer->ctNeurons)
+                    {
+                        break;
+                    }
+                    currentNeuron->connectionsIn = new connection[currentNeuron->ctConnectionsIn+1];
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
+    Layer *parseLayer(std::string str)
+    {
+        if(str.find("Layer") == std::string::npos)
+        {
+            return nullptr;
+        }
+
+        std::string layerNum = str.substr(str.find("Layer") + 5, str.find(":") - str.find("Layer") - 5);
+        std::string ctNeurons = str.substr(str.find(":") + 2, str.find("\n") - str.find(":") - 2);
+        std::string activationFunction = str.substr(str.find("\n") + 1, str.find(",") - str.find("\n") - 1);
+
+        if(activationFunction == "Linear") 
+        {
+            Linear *CLASSactivationFunction = new Linear();
+            Layer *newLayer = addLayer(std::stoi(ctNeurons), CLASSactivationFunction);
+            return newLayer;
+        }
+        else if(activationFunction == "Sigmoid")
+        {
+            Sigmoid *CLASSactivationFunction = new Sigmoid();
+            Layer *newLayer = addLayer(std::stoi(ctNeurons), CLASSactivationFunction);
+            return newLayer;
+        }
+        else if(activationFunction == "Tanh")
+        {
+            Tanh *CLASSactivationFunction = new Tanh();
+            Layer *newLayer = addLayer(std::stoi(ctNeurons), CLASSactivationFunction);
+            return newLayer;
+        }
+        else if(activationFunction == "ReLU")
+        {
+            ReLU *CLASSactivationFunction = new ReLU();
+            Layer *newLayer = addLayer(std::stoi(ctNeurons), CLASSactivationFunction);
+            return newLayer;
+        }
+        else if(activationFunction == "LeakyReLU")
+        {
+            LeakyReLU *CLASSactivationFunction = new LeakyReLU();
+            Layer *newLayer = addLayer(std::stoi(ctNeurons), CLASSactivationFunction);
+            return newLayer;
+        }
+        else if(activationFunction == "Softmax")
+        {
+            Softmax *CLASSactivationFunction = new Softmax();
+            Layer *newLayer = addLayer(std::stoi(ctNeurons), CLASSactivationFunction);
+            return newLayer;
+        }
+        else
+        {
+            std::cout << "ERROR: Activation function not found" << std::endl;
+            return nullptr;
+        }
+    }
+    void importNetwork(std::string fileName)
+    {
+        std::ifstream file;
+        file.open(fileName);
+        std::string lines;
+        std::string line;
+        
+        while(std::getline(file, line))
+        {
+            if(line != "")
+            {
+                lines.append(line);
+                lines.append("\n");
+            }
+            else
+            {
+                Layer *newLayer = parseLayer(lines);
+                getConnections(lines, newLayer);
+                lines = "";
+            }
+        }
+
+        file.close();
+    }
 };

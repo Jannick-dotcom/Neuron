@@ -18,6 +18,10 @@ ExponentialCost exponential;
 
 double possibleCombinations[100][2];
 
+#include <fstream>
+
+std::ofstream file;
+
 int main()
 {
     for(uint16_t i = 0; i < sizeof(possibleCombinations) / sizeof(possibleCombinations[0]); i++)
@@ -26,13 +30,13 @@ int main()
         possibleCombinations[i][1] = (rand() % 100) / 100.0;
     }
     Network *net = new Network(&MSE);
-    Layer *first = net->addLayer(2, &linear);
-    net->addLayer(20, &softmax);
-    Layer *hidden = net->addLayer(40, &relu);
-    Layer *last = net->addLayer(1, &sigmoid);
-    points.inputs = new double[first->ctNeurons];
-    points.expectedOutputs = new double[last->ctNeurons];
-    double learningRate = 0.005;
+    net->importNetwork("network.txt");
+    // Layer *first = net->addLayer(2, &linear);
+    // net->addLayer(200, &sigmoid);
+    // Layer *last = net->addLayer(1, &sigmoid);
+    points.inputs = new double[net->firstLayer->ctNeurons];
+    points.expectedOutputs = new double[1];
+    double learningRate = 0.00001;
     double lastCost = 0;
     do
     {
@@ -48,19 +52,9 @@ int main()
             net->learn(points.expectedOutputs);
             net->updateWeightsAndBiases(learningRate);
         }
-        std::system("clear");
         // net->print();
         std::cout << "Cost: " << net->cost << std::endl;
     } while(net->cost > 1 && net->cost < lastCost || lastCost == 0);
-    std::cout << std::endl;
-    for(uint16_t i = 0; i < sizeof(possibleCombinations) / sizeof(possibleCombinations[0]); i++)
-    {
-        points.inputs[0] = possibleCombinations[i][0];
-        points.inputs[1] = possibleCombinations[i][1];
-        points.expectedOutputs[0] = int(round(points.inputs[0])) && int(round(points.inputs[1]));
-        net->feedThrough(points);
-        std::cout << "Input: " << points.inputs[0] << " " << points.inputs[1] << " Expected: " << points.expectedOutputs[0] << " Output: " << last->neurons[0].outputVal << std::endl;
-    }
     net->exportNetwork("network.txt");
     delete[] points.inputs;
     delete[] points.expectedOutputs;

@@ -19,13 +19,13 @@ public:
         this->nextLayer = nullptr;
         this->prevLayer = prevLayer;
         
-        for (u_int16_t i = 0; i < ctNeurons; i++)
+        for (u_int16_t i = 0; i < ctNeurons+1; i++)
         {
             neurons[i].activationFunction = ActivationFunction;
             if (i == ctNeurons) // bias neuron
             {
                 neurons[i].outputVal = 1;                // bias neuron
-                neurons[i].activationFunction = nullptr; // TODO: if activation function is nullptr, then neuron is bias neuron
+                neurons[i].activationFunction = nullptr; 
                 neurons[i].connectionsIn = nullptr;
                 neurons[i].ctConnectionsIn = 0;
                 continue; // skip to next neuron because bias neuron has no incoming connections
@@ -75,7 +75,7 @@ public:
     }
     void print()
     {
-        for (int i = 0; i < ctNeurons; i++)
+        for (int i = 0; i < ctNeurons+1; i++)
         {
             for(int c = 0; c < neurons[i].ctConnectionsIn; c++)
             {
@@ -87,7 +87,7 @@ public:
     }
     void exportToFile(std::ofstream &file)
     {
-        for (int i = 0; i < ctNeurons + 1; i++)
+        for (int i = 0; i < ctNeurons+1; i++)
         {
             if(neurons[i].activationFunction != nullptr)
             {
@@ -95,8 +95,14 @@ public:
             }
             else
             {
-                file << "biasNeuron ";
+                file << "biasNeuron";
             }
+            if(neurons[i].ctConnectionsIn == 0)
+            {
+                file << "," << std::endl;
+                continue;
+            }
+
             for (int c = 0; c < neurons[i].ctConnectionsIn; c++)
             {
                 file << ", " << neurons[i].connectionsIn[c].weight;
