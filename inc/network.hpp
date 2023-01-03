@@ -179,6 +179,7 @@ public:
         file.open(fileName);
         Layer *currentLayer = firstLayer;
         uint16_t layerNum = 0;
+        file << "Cost: " << cost << std::endl;
         while(currentLayer != nullptr)
         {
             file << "Layer" << layerNum << ": " << currentLayer->ctNeurons << std::endl;
@@ -251,14 +252,15 @@ public:
 
     Layer *parseLayer(std::string str)
     {
-        if(str.find("Layer") == std::string::npos)
+        int layerIndex = str.find("Layer");
+        if(layerIndex == std::string::npos)
         {
             return nullptr;
         }
 
-        std::string layerNum = str.substr(str.find("Layer") + 5, str.find(":") - str.find("Layer") - 5);
-        std::string ctNeurons = str.substr(str.find(":") + 2, str.find("\n") - str.find(":") - 2);
-        std::string activationFunction = str.substr(str.find("\n") + 1, str.find(",") - str.find("\n") - 1);
+        std::string layerNum = str.substr(layerIndex + 5, str.find(":", layerIndex+5) - layerIndex - 5);
+        std::string ctNeurons = str.substr(str.find(":",layerIndex) + 2, str.find("\n", layerIndex) - str.find(":", layerIndex) - 2);
+        std::string activationFunction = str.substr(str.find("\n",layerIndex) + 1, str.find(",",layerIndex) - str.find("\n",layerIndex) - 1);
 
         if(activationFunction == "Linear") 
         {
@@ -290,12 +292,6 @@ public:
             Layer *newLayer = addLayer(std::stoi(ctNeurons), CLASSactivationFunction);
             return newLayer;
         }
-        else if(activationFunction == "Softmax")
-        {
-            Softmax *CLASSactivationFunction = new Softmax();
-            Layer *newLayer = addLayer(std::stoi(ctNeurons), CLASSactivationFunction);
-            return newLayer;
-        }
         else
         {
             std::cout << "ERROR: Activation function not found" << std::endl;
@@ -319,7 +315,10 @@ public:
             else
             {
                 Layer *newLayer = parseLayer(lines);
-                getConnections(lines, newLayer);
+                if(newLayer != nullptr)
+                {
+                    getConnections(lines, newLayer);
+                }
                 lines = "";
             }
         }
