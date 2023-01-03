@@ -7,8 +7,7 @@ dataPoint points;
 
 Sigmoid sigmoid;
 ReLU relu;
-Softmax softmax;
-// Tanh tanh;
+Tanh tanh;
 LeakyReLU leakyReLU;
 Linear linear;
 

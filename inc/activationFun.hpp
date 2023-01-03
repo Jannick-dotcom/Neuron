@@ -42,7 +42,7 @@ public:
         return tanh(x);
     }
     double derivative(double x) override {
-        return 1.0 - (*this)(x) * (*this)(x);
+        return 1.0 / pow(cosh(x),2);
     }
     Tanh() {
         name = "Tanh";
@@ -72,18 +72,5 @@ public:
     }
     LeakyReLU() {
         name = "LeakyReLU";
-    }
-};
-
-class Softmax : public ActivationFunction {
-public:
-    double operator()(double x) override {
-        return exp(x);
-    }
-    double derivative(double x) override {
-        return 1.0;
-    }
-    Softmax() {
-        name = "Softmax";
     }
 };
