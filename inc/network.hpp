@@ -13,6 +13,7 @@ class Network
 {
 public:
     Layer *firstLayer;
+    Layer *outputLayer;
     uint16_t ctLayers;
     double cost;
     Cost *costFunction;
@@ -39,6 +40,7 @@ public:
         {
             firstLayer = new Layer(ctNeurons, nullptr, activationFunction);
             ctLayers++;
+            outputLayer = firstLayer;
             return firstLayer;
         }
         else
@@ -50,6 +52,7 @@ public:
             }
             currentLayer->nextLayer = new Layer(ctNeurons, currentLayer, activationFunction);
             ctLayers++;
+            outputLayer = currentLayer->nextLayer;
             return currentLayer->nextLayer;
         }
     }
@@ -65,6 +68,19 @@ public:
         for(uint16_t i = 0; i < firstLayer->ctNeurons; i++)
         {
             firstLayer->neurons[i].inputVal = data.inputs[i];
+        }
+        while(currentLayer != nullptr)
+        {
+            currentLayer->feedThrough();
+            currentLayer = currentLayer->nextLayer;
+        }
+    }
+    void feedThrough()
+    {
+        Layer *currentLayer = firstLayer;
+        if(currentLayer == nullptr)
+        {
+            return;
         }
         while(currentLayer != nullptr)
         {
