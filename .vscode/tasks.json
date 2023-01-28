@@ -5,6 +5,7 @@
             "label": "C/C++: g++ build active file",
             "command": "/usr/bin/g++",
             "args": [
+                "-Wall",
                 "-fdiagnostics-color=always",
                 "-g",
                 "-I${workspaceFolder}/inc/",
