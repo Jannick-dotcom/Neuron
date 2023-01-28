@@ -26,6 +26,9 @@ public:
     }
     void feedThrough()
     {
-        *outputVal += *inputVal * weight;
+        if(inputVal != nullptr && outputVal != nullptr)
+            *outputVal += *inputVal * weight;
+        else
+            weight = 0;
     }
 };
