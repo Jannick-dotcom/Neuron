@@ -17,6 +17,12 @@ public:
     uint16_t ctLayers;
     double cost;
     Cost *costFunction;
+    Network()
+    {
+        this->firstLayer = nullptr;
+        this->ctLayers = 0;
+        this->costFunction = nullptr;
+    }
     Network(Cost *costFunction)
     {
         this->firstLayer = nullptr;
@@ -34,7 +40,7 @@ public:
         }
     }
 
-    Layer *addLayer(long ctNeurons, ActivationFunction *activationFunction)
+    Layer *addLayer(long ctNeurons, ActivationFunctionType activationFunction)
     {
         if(firstLayer == nullptr || ctLayers == 0)
         {
@@ -112,7 +118,7 @@ public:
     }
     double dOut_dWin(Neuron n, double w_in)
     {
-        return n.activationFunction->derivative(w_in);
+        return activationFunctionDerivative(n.type, w_in);
     }
     double dWin_dW(double input)
     {
@@ -146,7 +152,19 @@ public:
         clearGradients();
     }
 
-    void learn(double *expected)
+    void mutate(double mutationRate) //Mutate the network by a certain rate
+    {
+        uint8_t layerSpecifier = rand() % ctLayers; //select a random layer
+        //Also give the chance that no layer is mutated (By excluding the first and last layer)
+        if(layerSpecifier == 0) return; //Don't mutate the input layer
+        else if(layerSpecifier == ctLayers - 1) return; //Don't mutate the output layer
+
+        Layer *currentLayer = firstLayer; //Get the first layer
+        for(uint16_t i = 0; i < layerSpecifier; i++) 
+            currentLayer = currentLayer->nextLayer; //Get the specified random layer
+        currentLayer->mutate(mutationRate); //Mutate the specified layer
+    }
+    void learn(double *expected) //Improve the network based on the defined cost function and expected outputs
     {
         Layer *currentLayer = firstLayer;
         while(currentLayer->nextLayer != nullptr) currentLayer = currentLayer->nextLayer; //Get last layer
@@ -158,7 +176,6 @@ public:
             {
                 double output = currentLayer->neurons[i].outputVal;
                 double w_in = currentLayer->neurons[i].inputVal;
-                double doutdwin = currentLayer->neurons[i].activationFunction->derivative(w_in);
 
                 if(currentLayer->nextLayer == nullptr)
                 {
@@ -169,7 +186,6 @@ public:
                 for(uint16_t con = 0; con < currentLayer->neurons[i].ctConnectionsIn; con++)
                 {
                     double weight = currentLayer->neurons[i].connectionsIn[con].weight;
-                    double input = *currentLayer->neurons[i].connectionsIn[con].inputVal;
                     currentLayer->neurons[i].connectionsIn[con].fromNeuron->gradientW += currentLayer->neurons[i].gradientW * dWin_dIn(weight) * dOut_dWin(currentLayer->neurons[i], w_in);
                 }
             }
@@ -177,7 +193,7 @@ public:
         }
         cost = cost / lastLayer->ctNeurons;
     }
-    void print()
+    void print() //Show the network in the console
     {
         Layer *currentLayer = firstLayer;
         uint16_t layerNum = 0;
@@ -189,7 +205,8 @@ public:
             layerNum++;
         }
     }
-    void exportNetwork(std::string fileName)
+    
+    void exportNetwork(std::string fileName) //Export the network to a file (For later use) and for analysis
     {
         std::ofstream file;
         file.open(fileName);
@@ -206,28 +223,25 @@ public:
         file.close();
     }
 
+    //Import a network from a file
+
     void getConnections(std::string str, Layer *currentLayer)
     {
         uint32_t globalStart = 0;
         uint32_t connectionIndex = 0;
         uint32_t neuronIndex = 0;
         Neuron *currentNeuron = currentLayer->neurons;
-        if(currentLayer->prevLayer != nullptr)
-        {
-            currentNeuron->ctConnectionsIn = currentLayer->prevLayer->ctNeurons+1;
-            currentNeuron->connectionsIn = new connection[currentNeuron->ctConnectionsIn+1];
-        }
-        else
+        if(currentLayer->prevLayer == nullptr) //If the current layer is the input layer
         {
             return;
         }
 
-        while(str.find(",", globalStart) < str.length())
+        while(str.find(",", globalStart) < str.length()) //While there are still connections to be found
         {
-            uint32_t start = str.find(", ", globalStart) + 2;
-            uint32_t end = str.find(", ", start);
-            uint32_t newline = str.find("\n", start);
-            if(start < globalStart)
+            uint32_t start = str.find(", ", globalStart) + 2; //Get the start of the connection
+            uint32_t end = str.find(", ", start); //Get the end of the connection
+            uint32_t newline = str.find("\n", start); //Get the end of the line
+            if(start < globalStart) 
             {
                 break;
             }
@@ -236,10 +250,10 @@ public:
                 end = newline;
             }
 
-            if(start != -1 && end != -1)
+            if(start != (uint32_t)-1 && end != (uint32_t)-1) //If the connection is valid
             {
-                std::string weight = str.substr(start, end - start);
-                double weightVal = std::stod(weight);
+                std::string weight = str.substr(start, end - start); //Get the weight of the connection
+                double weightVal = std::stod(weight); //Convert the weight to a double
                 currentNeuron->connectionsIn[connectionIndex].weight = weightVal;
                 currentNeuron->connectionsIn[connectionIndex].fromNeuron = currentLayer->prevLayer->neurons + connectionIndex;
                 currentNeuron->connectionsIn[connectionIndex].toNeuron = currentNeuron;
@@ -247,28 +261,27 @@ public:
                 currentNeuron->connectionsIn[connectionIndex].outputVal = &currentNeuron->inputVal;
                 connectionIndex++;
                 globalStart = end;
-                if(connectionIndex == currentNeuron->ctConnectionsIn)
+                if(connectionIndex == currentNeuron->ctConnectionsIn) //If the current neuron has no more connections
                 {
-                    connectionIndex = 0;
-                    currentNeuron++;
-                    neuronIndex++;
-                    if(neuronIndex == currentLayer->ctNeurons)
+                    connectionIndex = 0; //Reset the connection index
+                    currentNeuron++;    //Move to the next neuron
+                    neuronIndex++;     //Increment the neuron index
+                    if(neuronIndex == currentLayer->ctNeurons) //If the current layer has no more neurons
                     {
                         break;
                     }
-                    currentNeuron->connectionsIn = new connection[currentNeuron->ctConnectionsIn+1];
+                    // currentNeuron->connectionsIn = new connection[currentNeuron->ctConnectionsIn+1];
                 }
             }
-            else
+            else //If the connection is invalid
             {
                 break;
             }
         }
     }
-
     Layer *parseLayer(std::string str)
     {
-        int layerIndex = str.find("Layer");
+        unsigned long layerIndex = str.find("Layer");
         if(layerIndex == std::string::npos)
         {
             return nullptr;
@@ -276,36 +289,11 @@ public:
 
         std::string layerNum = str.substr(layerIndex + 5, str.find(":", layerIndex+5) - layerIndex - 5);
         std::string ctNeurons = str.substr(str.find(":",layerIndex) + 2, str.find("\n", layerIndex) - str.find(":", layerIndex) - 2);
-        std::string activationFunction = str.substr(str.find("\n",layerIndex) + 1, str.find(",",layerIndex) - str.find("\n",layerIndex) - 1);
+        ActivationFunctionType activationFunction = (ActivationFunctionType)std::stoi(str.substr(str.find("\n",layerIndex) + 1, str.find(",",layerIndex) - str.find("\n",layerIndex) - 1));
 
-        if(activationFunction == "Linear") 
+        if(activationFunction < NONE) 
         {
-            Linear *CLASSactivationFunction = new Linear();
-            Layer *newLayer = addLayer(std::stoi(ctNeurons), CLASSactivationFunction);
-            return newLayer;
-        }
-        else if(activationFunction == "Sigmoid")
-        {
-            Sigmoid *CLASSactivationFunction = new Sigmoid();
-            Layer *newLayer = addLayer(std::stoi(ctNeurons), CLASSactivationFunction);
-            return newLayer;
-        }
-        else if(activationFunction == "Tanh")
-        {
-            Tanh *CLASSactivationFunction = new Tanh();
-            Layer *newLayer = addLayer(std::stoi(ctNeurons), CLASSactivationFunction);
-            return newLayer;
-        }
-        else if(activationFunction == "ReLU")
-        {
-            ReLU *CLASSactivationFunction = new ReLU();
-            Layer *newLayer = addLayer(std::stoi(ctNeurons), CLASSactivationFunction);
-            return newLayer;
-        }
-        else if(activationFunction == "LeakyReLU")
-        {
-            LeakyReLU *CLASSactivationFunction = new LeakyReLU();
-            Layer *newLayer = addLayer(std::stoi(ctNeurons), CLASSactivationFunction);
+            Layer *newLayer = addLayer(std::stoi(ctNeurons), activationFunction);
             return newLayer;
         }
         else

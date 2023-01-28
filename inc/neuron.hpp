@@ -12,13 +12,13 @@ public:
     double gradientW;
     connection *connectionsIn;
     u_int32_t ctConnectionsIn;
-    ActivationFunction *activationFunction;
+    ActivationFunctionType type;
     void updateInput()
     {
         if(connectionsIn != nullptr)
         {
             inputVal = 0.0;
-            for (int i = 0; i < ctConnectionsIn; i++)
+            for (uint16_t i = 0; i < ctConnectionsIn; i++)
             {
                 connectionsIn[i].feedThrough();
             }
@@ -26,7 +26,7 @@ public:
     }
     void activation(double inputVal)
     {
-        if(activationFunction != nullptr) outputVal = activationFunction->operator()(inputVal);
+        outputVal = activationFunction(type, inputVal);
     }
     Neuron()
     {
