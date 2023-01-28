@@ -10,20 +10,6 @@ public:
     virtual double costDerivative(double output, double target) = 0;
 };
 
-class CrossEntropyCost : public Cost {
-public:
-    CrossEntropyCost() {}
-    ~CrossEntropyCost() {}
-
-    double cost(double output, double target) {
-        return -target * log(output) - (1 - target) * log(1 - output);
-    }
-
-    double costDerivative(double output, double target) {
-        return output - target;
-    }
-};
-
 class QuadraticCost : public Cost {
 public:
     QuadraticCost() {}
