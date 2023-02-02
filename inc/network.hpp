@@ -154,7 +154,7 @@ public:
 
     void mutate(double mutationRate) //Mutate the network by a certain rate
     {
-        uint8_t layerSpecifier = rand() % ctLayers; //select a random layer
+        uint8_t layerSpecifier = (rand() % (ctLayers-1)) + 1; //select a random layer
         //Also give the chance that no layer is mutated (By excluding the first and last layer)
         if(layerSpecifier == 0) return; //Don't mutate the input layer
         else if(layerSpecifier == ctLayers - 1) return; //Don't mutate the output layer
