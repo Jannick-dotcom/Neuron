@@ -1,6 +1,7 @@
 #pragma once
 #include "neuron.hpp"
 #include "connection.hpp"
+#include "mutationHelper.hpp"
 #include <iostream>
 #include <fstream>
 
@@ -97,11 +98,11 @@ public:
             newNeurons[i].ctConnectionsIn = prevLayer->ctNeurons+1;                   // count of connections from previous layer to this layer
             for (uint16_t neurPrevLayer = 0; neurPrevLayer < prevLayer->ctNeurons+1; neurPrevLayer++) // for each connection to currentNeuron
             {
-                neurons[i].connectionsIn[neurPrevLayer].inputVal = &prevLayer->neurons[neurPrevLayer].outputVal; // set start of connection to previous layer's neuron
-                neurons[i].connectionsIn[neurPrevLayer].outputVal = &newNeurons[i].inputVal;                        // set end of connection to current layer's neuron
-                neurons[i].connectionsIn[neurPrevLayer].weight = rand() / double(RAND_MAX) - 0.5;                // set weight of connection to random value between -0.5 and 0.5
-                neurons[i].connectionsIn[neurPrevLayer].fromNeuron = &prevLayer->neurons[neurPrevLayer];
-                neurons[i].connectionsIn[neurPrevLayer].toNeuron = &newNeurons[i];
+                newNeurons[i].connectionsIn[neurPrevLayer].inputVal = &prevLayer->neurons[neurPrevLayer].outputVal; // set start of connection to previous layer's neuron
+                newNeurons[i].connectionsIn[neurPrevLayer].outputVal = &newNeurons[i].inputVal;                        // set end of connection to current layer's neuron
+                newNeurons[i].connectionsIn[neurPrevLayer].weight = rand() / double(RAND_MAX) - 0.5;                // set weight of connection to random value between -0.5 and 0.5
+                newNeurons[i].connectionsIn[neurPrevLayer].fromNeuron = &prevLayer->neurons[neurPrevLayer];
+                newNeurons[i].connectionsIn[neurPrevLayer].toNeuron = &newNeurons[i];
             }
         }
         delete[] neurons;
@@ -130,54 +131,46 @@ public:
     }
     void removeNeuron(uint16_t index, Layer *nextLayer)
     {
-        if(index >= ctNeurons)
-        {
-            return;
-        }
-        Neuron *newNeurons = new Neuron[ctNeurons]; //create new array with one less neuron
-        
-        //copy old neurons to new array below removed neuron
-        for (uint16_t i = 0; i < index; i++)
-        {
-            newNeurons[i] = neurons[i];
-        }
-        //
-        
-        //delete all connections to removed neuron
-        delete[] neurons[index].connectionsIn;
-        neurons[index].connectionsIn = nullptr;
-        //
+        Neuron *newNeurons = new Neuron[ctNeurons];   //create new array with one less neuron
+        if(checkHeapAllocated(newNeurons)) return;
 
-        //copy old neurons to new array above removed neuron
-        for (uint16_t i = index+1; i < ctNeurons+1; i++) //copy old neurons to new array
-        {
-            newNeurons[i-1] = neurons[i];
-        }
-        //
+        copyNeuronExcept(newNeurons, neurons, ctNeurons, index); //copy all neurons except the one to be removed
+        delete[] neurons[index].connectionsIn; //delete connections of removed neuron
+        ctNeurons--; //decrease count of neurons
 
-        ctNeurons -= 1; //decrease count of neurons
-
-        if(nextLayer == nullptr || nextLayer->ctNeurons == 0 || nextLayer->neurons == nullptr)
+        for(uint16_t i = 0; i < ctNeurons; i++) //fix connections of current layer
         {
-            return;
-        }
-
-        //Clean connections of next Layer
-        for(uint16_t indexNeuron = 0; indexNeuron < nextLayer->ctNeurons; indexNeuron++) //For each Neuron in next layer
-        {
-            connection *newConnections = new connection[nextLayer->neurons[indexNeuron].ctConnectionsIn - 1]; //create new array with one less connection
-            for(uint16_t indexPrevNeuron = 0; indexPrevNeuron < ctNeurons+1; indexPrevNeuron++) //for each connection to currentNeuron
+            for(uint16_t j = 0; j < newNeurons[i].ctConnectionsIn; j++)
             {
-                newConnections[indexPrevNeuron].inputVal = &newNeurons[indexPrevNeuron].outputVal; //copy connection to new array
-                newConnections[indexPrevNeuron].outputVal = &nextLayer->neurons[indexNeuron].inputVal; //copy connection to new array
-                newConnections[indexPrevNeuron].weight = nextLayer->neurons[indexNeuron].connectionsIn[indexPrevNeuron].weight; //copy connection to new array
-                newConnections[indexPrevNeuron].fromNeuron = &newNeurons[indexPrevNeuron];
-                newConnections[indexPrevNeuron].toNeuron = &nextLayer->neurons[indexNeuron];
+                newNeurons[i].connectionsIn[j].toNeuron = &newNeurons[i];
+                newNeurons[i].connectionsIn[j].outputVal = &newNeurons[i].inputVal;
             }
-            nextLayer->neurons[indexNeuron].ctConnectionsIn -= 1; //decrease count of connections
-            delete[] nextLayer->neurons[indexNeuron].connectionsIn; //delete old array
-            nextLayer->neurons[indexNeuron].connectionsIn = newConnections; //set new array
         }
+
+        for(uint16_t i = 0; i < nextLayer->ctNeurons; i++) //fix connections of next layer
+        {
+            if(isBiasNeuron(&nextLayer->neurons[i])) continue;
+
+            connection *newConnections = new connection[ctNeurons+1]; //create new array with one less connection
+            if(checkHeapAllocated(newConnections)) return;
+
+            uint16_t connIndex = 0;
+            for(uint16_t j = 0; j < nextLayer->neurons[i].ctConnectionsIn; j++) //copy all connections except the one to be removed
+            {
+                if(nextLayer->neurons[i].connectionsIn[j].fromNeuron == &neurons[index]) //if pointed to neuron to be removed
+                {
+                    continue;
+                }
+                newConnections[connIndex] = nextLayer->neurons[i].connectionsIn[j];
+                newConnections[connIndex].fromNeuron = &newNeurons[connIndex];
+                newConnections[connIndex].inputVal = &newNeurons[connIndex].outputVal;
+                connIndex++;
+            }
+            delete[] nextLayer->neurons[i].connectionsIn;
+            nextLayer->neurons[i].connectionsIn = newConnections;
+            nextLayer->neurons[i].ctConnectionsIn--;
+        }
+
         delete[] neurons;
         neurons = newNeurons;
     }
@@ -196,9 +189,11 @@ public:
                 break;
             case 2: // change connection
             {
-                Neuron *tempNeuron = &neurons[rand() % ctNeurons];
-                connection *tempConn = &tempNeuron->connectionsIn[rand() % tempNeuron->ctConnectionsIn];
-                tempConn->weight += (rand() / double(RAND_MAX) - 0.5) * mutationRate;
+                uint16_t neuronSpecifier = rand() % ctNeurons;
+                uint16_t connectionSpecifier = rand() % neurons[neuronSpecifier].ctConnectionsIn;
+                double weightchange = (rand() / double(RAND_MAX) - 0.5) * mutationRate;
+                double *weight = &neurons[neuronSpecifier].connectionsIn[connectionSpecifier].weight;
+                *weight += weightchange;
                 break;
             }
             default:
@@ -233,13 +228,13 @@ public:
             {
                 file << neurons[i].type;
             }
-            else
-            {
-                file << "biasNeuron";
-            }
+            // else
+            // {
+            //     file << "biasNeuron";
+            // }
             if(neurons[i].ctConnectionsIn == 0)
             {
-                file << "," << std::endl;
+                file << std::endl;
                 continue;
             }
 

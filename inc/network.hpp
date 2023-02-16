@@ -16,18 +16,18 @@ public:
     Layer *outputLayer;
     uint16_t ctLayers;
     double cost;
-    Cost *costFunction;
+    CostFunctionType costType;
     Network()
     {
         this->firstLayer = nullptr;
         this->ctLayers = 0;
-        this->costFunction = nullptr;
+        this->costType = CostFunctionType::CostNONE;
     }
-    Network(Cost *costFunction)
+    Network(CostFunctionType costType)
     {
         this->firstLayer = nullptr;
         this->ctLayers = 0;
-        this->costFunction = costFunction;
+        this->costType = costType;
     }
     ~Network()
     {
@@ -109,12 +109,12 @@ public:
     
     double nodeCost(double output, double target)
     {
-        return costFunction->cost(output, target);
+        return costFunction(costType, output, target);
     }
 
     double dcost_dout(double expected, double actual)
     {
-        return costFunction->costDerivative(actual, expected);
+        return costFunctionDerivative(costType ,actual, expected);
     }
     double dOut_dWin(Neuron n, double w_in)
     {
@@ -154,7 +154,7 @@ public:
 
     void mutate(double mutationRate) //Mutate the network by a certain rate
     {
-        uint8_t layerSpecifier = (rand() % (ctLayers-1)) + 1; //select a random layer
+        uint8_t layerSpecifier = (rand() % (ctLayers-2)) + 1; //select a random layer
         //Also give the chance that no layer is mutated (By excluding the first and last layer)
         if(layerSpecifier == 0) return; //Don't mutate the input layer
         else if(layerSpecifier == ctLayers - 1) return; //Don't mutate the output layer
@@ -179,7 +179,7 @@ public:
 
                 if(currentLayer->nextLayer == nullptr)
                 {
-                    cost += costFunction->cost(currentLayer->neurons[i].outputVal, expected[i]);
+                    cost += costFunction(costType, currentLayer->neurons[i].outputVal, expected[i]);
                     currentLayer->neurons[i].gradientW = dcost_dout(expected[i], output) * dOut_dWin(currentLayer->neurons[i], w_in);
                 }
                 

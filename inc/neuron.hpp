@@ -36,6 +36,9 @@ public:
         this->ctConnectionsIn = 0;
         this->gradientW = 0;
     }
+    ~Neuron()
+    {
+    }
 
     void setInput(double inputVal)
     {

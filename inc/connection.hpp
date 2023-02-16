@@ -15,6 +15,8 @@ public:
     {
         this->inputVal = nullptr;
         this->outputVal = nullptr;
+        this->fromNeuron = nullptr;
+        this->toNeuron = nullptr;
         this->weight = 1.0;
     }
     connection(double *in, double *out, double weight, double bias)
@@ -24,11 +26,20 @@ public:
         this->weight = weight;
         this->prevWeightChange = 0;
     }
+    connection(const connection &conn)
+    {
+        this->inputVal = conn.inputVal;
+        this->outputVal = conn.outputVal;
+        this->fromNeuron = conn.fromNeuron;
+        this->toNeuron = conn.toNeuron;
+        this->weight = conn.weight;
+        this->prevWeightChange = conn.prevWeightChange;
+    }
     void feedThrough()
     {
+        if(weight == 0.0)
+            return;
         if(inputVal != nullptr && outputVal != nullptr)
             *outputVal += *inputVal * weight;
-        else
-            weight = 0;
     }
 };
