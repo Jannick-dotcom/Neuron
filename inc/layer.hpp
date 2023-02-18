@@ -178,11 +178,11 @@ public:
     void mutate(double mutationRate)
     {
         //to leave the chance that the layer does not mutate at all, we do modulo 4 instead of modulo 3
-        uint8_t mutationSpecifier = rand() % 4; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = do nothing
+        uint8_t mutationSpecifier = rand() % 5; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = do nothing
         switch (mutationSpecifier)
         {
             case 0: // add neuron
-                addNeuron(neurons[0].type);
+                addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
                 break;
             case 1: // remove neuron
                 removeNeuron(rand() % ctNeurons, nextLayer);
@@ -195,6 +195,12 @@ public:
                 double *weight = &neurons[neuronSpecifier].connectionsIn[connectionSpecifier].weight;
                 *weight += weightchange;
                 break;
+            }
+            case 3: //change activation function
+            {
+                uint16_t neuronSpecifier = rand() % ctNeurons;
+                ActivationFunctionType newActivationfunction = (ActivationFunctionType)(rand() % ActivationFunctionType::NONE);
+                neurons[neuronSpecifier].type = newActivationfunction;
             }
             default:
                 break;
