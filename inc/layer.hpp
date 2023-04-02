@@ -111,7 +111,7 @@ public:
         //add connections to next layer
         for(uint16_t i = 0; i < nextLayer->ctNeurons; i++)
         {
-            connection *newConnections = new connection[nextLayer->neurons[i].ctConnectionsIn + count+1];
+            connection *newConnections = new connection[nextLayer->neurons[i].ctConnectionsIn + count];
             for(uint16_t j = 0; j < nextLayer->neurons[i].ctConnectionsIn; j++)
             {
                 newConnections[j+count] = nextLayer->neurons[i].connectionsIn[j];
@@ -178,10 +178,12 @@ public:
     void mutate(double mutationRate)
     {
         //to leave the chance that the layer does not mutate at all, we do modulo 4 instead of modulo 3
-        uint8_t mutationSpecifier = rand() % 5; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = do nothing
+        uint8_t mutationSpecifier = rand() % 5; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function 4 = do nothing
         switch (mutationSpecifier)
         {
             case 0: // add neuron
+                //TODO: Fix activation function setting
+                // addNeuron(ActivationFunctionType::LINEAR);//(rand() % ActivationFunctionType::NONE));
                 addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
                 break;
             case 1: // remove neuron
@@ -201,6 +203,7 @@ public:
                 uint16_t neuronSpecifier = rand() % ctNeurons;
                 ActivationFunctionType newActivationfunction = (ActivationFunctionType)(rand() % ActivationFunctionType::NONE);
                 neurons[neuronSpecifier].type = newActivationfunction;
+                break;
             }
             default:
                 break;
@@ -240,7 +243,7 @@ public:
             // }
             if(neurons[i].ctConnectionsIn == 0)
             {
-                file << std::endl;
+                file << "\n";
                 continue;
             }
 
