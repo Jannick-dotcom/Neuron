@@ -21,7 +21,7 @@ public:
     {
         this->firstLayer = nullptr;
         this->ctLayers = 0;
-        this->costType = CostFunctionType::CostNONE;
+        this->costType = CostFunctionType::CostQUADRATIC;
     }
     Network(CostFunctionType costType)
     {
@@ -289,18 +289,24 @@ public:
 
         std::string layerNum = str.substr(layerIndex + 5, str.find(":", layerIndex+5) - layerIndex - 5);
         std::string ctNeurons = str.substr(str.find(":",layerIndex) + 2, str.find("\n", layerIndex) - str.find(":", layerIndex) - 2);
-        ActivationFunctionType activationFunction = (ActivationFunctionType)std::stoi(str.substr(str.find("\n",layerIndex) + 1, str.find(",",layerIndex) - str.find("\n",layerIndex) - 1));
 
-        if(activationFunction < NONE) 
+        Layer *newLayer = addLayer(std::stoi(ctNeurons), NONE);
+        for(uint16_t i = 0; i < newLayer->ctNeurons; i++)
         {
-            Layer *newLayer = addLayer(std::stoi(ctNeurons), activationFunction);
-            return newLayer;
+            std::string actString = str.substr(str.find("\n",layerIndex) + 1, str.find(",",layerIndex) - str.find("\n",layerIndex) - 1);
+            ActivationFunctionType activationFunction = (ActivationFunctionType)std::stoi(actString);
+            layerIndex = str.find("\n", layerIndex+1);
+            if(activationFunction < NONE) 
+            {
+                newLayer->neurons[i].type = activationFunction;
+            }
+            else
+            {
+                std::cout << "ERROR: Activation function not found" << std::endl;
+                return nullptr;
+            }
         }
-        else
-        {
-            std::cout << "ERROR: Activation function not found" << std::endl;
-            return nullptr;
-        }
+        return newLayer;
     }
     void importNetwork(std::string fileName)
     {
