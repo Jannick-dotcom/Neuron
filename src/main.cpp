@@ -4,9 +4,6 @@
 
 dataPoint points;
 
-QuadraticCost MSE;
-ExponentialCost exponential;
-
 #include <fstream>
 
 std::ofstream file;
@@ -55,7 +52,7 @@ Network *generateMutatedNets(Network *net, uint16_t countAgents)
     for(uint16_t i = 0; i < countAgents; i++)
     {
         agents[i].importNetwork("transfer.txt");
-        agents[i].costFunction = net->costFunction;
+        agents[i].costType = net->costType;
         agents[i].mutate(0.01);
     }
     remove("transfer.txt");
@@ -75,7 +72,7 @@ void doMutating(Network *net, uint16_t countAgents, uint16_t countGenerations)
             agents[agent].firstLayer->neurons[0].inputVal = 0.5;
             agents[agent].firstLayer->neurons[1].inputVal = 0;
             agents[agent].feedThrough();
-            agents[agent].cost = agents[agent].costFunction->cost(agents[agent].outputLayer->neurons[0].outputVal, 0.2);
+            agents[agent].cost = costFunction(agents[agent].costType, agents[agent].outputLayer->neurons[0].outputVal, 0.2);
             //////////////////////////////////////////////////
             if(agents[agent].cost < agents[bestNet].cost) //If performance of agent is better than the current best
             {
@@ -92,7 +89,7 @@ void doMutating(Network *net, uint16_t countAgents, uint16_t countGenerations)
 
 int main()
 {
-    Network *net = new Network(&MSE);
+    Network *net = new Network(CostQUADRATIC);
     // net->importNetwork("network.txt");
     net->addLayer(2, LINEAR);
     net->addLayer(150, RELU);
