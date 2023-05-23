@@ -86,7 +86,7 @@ public:
         for(uint16_t n = 0; n < nextLayer->ctNeurons+1; n++) //For each neuron in next layer
         {
             Neuron *n_temp = &nextLayer->neurons[n];
-            if(n_temp->type = NONE) continue;
+            if(n_temp->type == NONE) continue;
             connection *newConnections = new connection[ctNeurons + count + 1];
             for(uint16_t c = 0; c < count; c++)
             {
