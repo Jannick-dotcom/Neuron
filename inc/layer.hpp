@@ -157,7 +157,7 @@ public:
 
     void mutate(double mutationRate)
     {
-        //to leave the chance that the layer does not mutate at all, we do modulo 4 instead of modulo 3
+        //to leave the chance that the layer does not mutate at all, we do modulo n+1
         uint8_t mutationSpecifier = rand() % 5; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function 4 = do nothing
         switch (mutationSpecifier)
         {
