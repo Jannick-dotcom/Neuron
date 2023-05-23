@@ -57,13 +57,6 @@ public:
     }
     ~Layer()
     {
-        if(prevLayer != nullptr)
-        {
-            for (u_int16_t i = 0; i < ctNeurons; i++)
-            {
-                delete[] neurons[i].connectionsIn;
-            }
-        }
         delete[] neurons;
     }
 
