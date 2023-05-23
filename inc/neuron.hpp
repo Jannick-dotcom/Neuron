@@ -38,6 +38,7 @@ public:
     }
     ~Neuron()
     {
+        delete[] connectionsIn;
     }
 
     void setInput(double inputVal)
@@ -52,5 +53,17 @@ public:
     {
         updateInput();
         activation(inputVal);
+    }
+    void print()
+    {
+        std::cout << connectionsIn << "\t";
+        for(uint16_t i = 0; i < ctConnectionsIn; i++)
+        {
+            std::cout << connectionsIn[i].fromNeuron << " ";
+            std::cout << connectionsIn[i].toNeuron << " ";
+            std::cout << connectionsIn[i].inputVal << " ";
+            std::cout << connectionsIn[i].outputVal << " ";
+        }
+        std::cout << std::endl;
     }
 };
