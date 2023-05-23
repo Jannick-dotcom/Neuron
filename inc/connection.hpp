@@ -39,7 +39,9 @@ public:
     {
         if(weight == 0.0)
             return;
-        if(inputVal != nullptr && outputVal != nullptr)
+        if(inputVal != nullptr && outputVal != nullptr && fromNeuron != nullptr && toNeuron != nullptr)
             *outputVal += *inputVal * weight;
+        else
+            weight = 0;
     }
 };
