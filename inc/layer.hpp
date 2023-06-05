@@ -62,97 +62,75 @@ public:
 
     void addNeuron(ActivationFunctionType ActivationFunction, uint16_t count = 1)
     {
-        Neuron *newNeurons = new Neuron[ctNeurons + count + 1];
-
-        for(uint16_t j = 0; j < count; j++)
+        if(count == 0) return;
+        Neuron *newNeurons = new Neuron[ctNeurons + 1 + count];
+        //////////////Newly added Neurons////////////////////////////////////////////////////////////////////////
+        for(uint16_t i = 0; i < count; i++) //add new Neurons to the start of array
         {
-            copySingleNeuron(&neurons[j], &newNeurons[j]);
-            newNeurons[j].connectionsIn = new connection[prevLayer->ctNeurons+1];
-            for(uint16_t i = 0; i<prevLayer->ctNeurons+1; i++)
+            newNeurons[i].type = ActivationFunction;
+            newNeurons[i].ctConnectionsIn = prevLayer->ctNeurons + 1;
+            newNeurons[i].connectionsIn = new connection[newNeurons[i].ctConnectionsIn];
+            for(uint16_t j = 0; j < newNeurons[i].ctConnectionsIn; j++) // define connections of new neurons
             {
-                newNeurons[j].connectionsIn[i].fromNeuron = &prevLayer->neurons[i];
-                newNeurons[j].connectionsIn[i].toNeuron = &newNeurons[0];
-                newNeurons[j].connectionsIn[i].inputVal = &prevLayer->neurons[i].outputVal;
-                newNeurons[j].connectionsIn[i].outputVal = &newNeurons[0].inputVal;
-                newNeurons[j].connectionsIn[i].weight = 1;
+                connection *tempCurrCon = &(newNeurons[i].connectionsIn[j]);
+                tempCurrCon->fromNeuron = &(prevLayer->neurons[j]);
+                tempCurrCon->toNeuron = &(newNeurons[i]);
+                tempCurrCon->inputVal = &(tempCurrCon->fromNeuron->outputVal);
+                tempCurrCon->outputVal = &(tempCurrCon->toNeuron->inputVal);
             }
         }
-        for(uint16_t i = count; i<ctNeurons + count + 1; i++)
+        //////////////Copy not change neurons///////////////////////////////////////////////////////////////////
+        for(uint16_t i = 0; i < ctNeurons + 1; i++)
         {
-            copySingleNeuron(&neurons[i-count], &newNeurons[i]);
+            Neuron *nOld = &(neurons[i]);
+            Neuron *nNew = &(newNeurons[count + i]);
+            nNew->connectionsIn = nOld->connectionsIn; //Transfer connections
+            nNew->ctConnectionsIn = nOld->ctConnectionsIn;
+            nOld->connectionsIn = nullptr; //Disown connections of old neurons (otherwise they would be deleted)
+            nNew->gradientW = nOld->gradientW;
+            nNew->type = nOld->type;
+            for(uint16_t j = 0; j < nNew->ctConnectionsIn; j++)
+            {
+                nNew->connectionsIn[j].outputVal = &(nNew->inputVal);
+                nNew->connectionsIn[j].toNeuron = nNew;
+            }
         }
-
-        //NextLayer
-        for(uint16_t n = 0; n < nextLayer->ctNeurons+1; n++) //For each neuron in next layer
+        //////////////Delete old Neurons///////////////////////////////////////////////////////////////////////
+        delete[] neurons;
+        neurons = newNeurons;
+        ctNeurons += count;
+        //////////////Change next layer connections to new neurons/////////////////////////////////////////////
+        for(uint16_t i = 0; i < nextLayer->ctNeurons + 1; i++)
         {
-            Neuron *n_temp = &nextLayer->neurons[n];
-            if(n_temp->type == NONE) continue;
-            connection *newConnections = new connection[ctNeurons + count + 1];
-            for(uint16_t c = 0; c < count; c++)
+            if(nextLayer->neurons[i].type == NONE) continue; //If bias neuron - nothing to be done
+            connection *newCon = new connection[ctNeurons + 1]; //create new connections with updated count
+            for(uint16_t j = 0; j < ctNeurons + 1; j++)
             {
-                connection *c_temp = &newConnections[c];
-                c_temp->weight = 1;
-                c_temp->fromNeuron = &newNeurons[c];
-                c_temp->inputVal = &newNeurons[c].outputVal;
-                c_temp->toNeuron = n_temp;
-                c_temp->outputVal = &newNeurons[c].inputVal;
+                if(j < count) //Newly added neuron connection
+                {
+                    newCon->fromNeuron = &(neurons[j]);
+                    newCon->toNeuron = &(nextLayer->neurons[i]);
+                    newCon->inputVal = &(neurons[j].outputVal);
+                    newCon->outputVal = &(nextLayer->neurons[i].inputVal);
+                    newCon->weight = 1;
+                    newCon->prevWeightChange = 0;
+                }
+                else //Already present connections
+                {
+                    newCon->fromNeuron = &(neurons[j]);
+                    newCon->inputVal = &(neurons[j].outputVal);
+                    newCon->toNeuron = &(nextLayer->neurons[i]);
+                    newCon->outputVal = &(nextLayer->neurons[i].inputVal);
+                    newCon->weight = nextLayer->neurons[i].connectionsIn[j - count].weight;
+                    newCon->prevWeightChange = nextLayer->neurons[i].connectionsIn[j - count].prevWeightChange;
+                }
             }
-
-            for(uint16_t c = count; c < ctNeurons + count + 1; c++)
-            {
-                connection *c_temp = &newConnections[c];
-                c_temp->weight = n_temp->connectionsIn[c - count].weight;
-                c_temp->fromNeuron = &newNeurons[c];
-                c_temp->inputVal = &newNeurons[c].outputVal;
-                c_temp->toNeuron = n_temp;
-                c_temp->outputVal = &n_temp->inputVal;
-            }
+            nextLayer->neurons[i].connectionsIn = newCon;
+            nextLayer->neurons[i].ctConnectionsIn = ctNeurons + 1;
         }
     }
     void removeNeuron(uint16_t index, Layer *nextLayer)
     {
-        Neuron *newNeurons = new Neuron[ctNeurons];   //create new array with one less neuron
-        if(checkHeapAllocated(newNeurons)) return;
-
-        copyNeuronExcept(newNeurons, neurons, ctNeurons, index); //copy all neurons except the one to be removed
-        delete[] neurons[index].connectionsIn; //delete connections of removed neuron
-        ctNeurons--; //decrease count of neurons
-
-        for(uint16_t i = 0; i < ctNeurons; i++) //fix connections of current layer
-        {
-            for(uint16_t j = 0; j < newNeurons[i].ctConnectionsIn; j++)
-            {
-                newNeurons[i].connectionsIn[j].toNeuron = &newNeurons[i];
-                newNeurons[i].connectionsIn[j].outputVal = &newNeurons[i].inputVal;
-            }
-        }
-
-        for(uint16_t i = 0; i < nextLayer->ctNeurons; i++) //fix connections of next layer
-        {
-            if(isBiasNeuron(&nextLayer->neurons[i])) continue;
-
-            connection *newConnections = new connection[ctNeurons+1]; //create new array with one less connection
-            if(checkHeapAllocated(newConnections)) return;
-
-            uint16_t connIndex = 0;
-            for(uint16_t j = 0; j < nextLayer->neurons[i].ctConnectionsIn; j++) //copy all connections except the one to be removed
-            {
-                if(nextLayer->neurons[i].connectionsIn[j].fromNeuron == &neurons[index]) //if pointed to neuron to be removed
-                {
-                    continue;
-                }
-                newConnections[connIndex] = nextLayer->neurons[i].connectionsIn[j];
-                newConnections[connIndex].fromNeuron = &newNeurons[connIndex];
-                newConnections[connIndex].inputVal = &newNeurons[connIndex].outputVal;
-                connIndex++;
-            }
-            delete[] nextLayer->neurons[i].connectionsIn;
-            nextLayer->neurons[i].connectionsIn = newConnections;
-            nextLayer->neurons[i].ctConnectionsIn--;
-        }
-
-        delete[] neurons;
-        neurons = newNeurons;
     }
 
     void mutate(double mutationRate)
@@ -162,12 +140,10 @@ public:
         switch (mutationSpecifier)
         {
             case 0: // add neuron
-                //TODO: Fix activation function setting
-                // addNeuron(ActivationFunctionType::LINEAR);//(rand() % ActivationFunctionType::NONE));
                 addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
                 break;
             case 1: // remove neuron
-                removeNeuron(rand() % ctNeurons, nextLayer);
+                removeNeuron(rand() % ctNeurons+1, nextLayer);
                 break;
             case 2: // change connection
             {
@@ -192,7 +168,7 @@ public:
 
     void feedThrough()
     {
-        for (uint16_t i = 0; i < ctNeurons; i++)
+        for (uint16_t i = 0; i < ctNeurons+1; i++)
         {
             neurons[i].feedThrough();
         }
