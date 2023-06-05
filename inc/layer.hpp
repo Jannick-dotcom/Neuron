@@ -129,8 +129,52 @@ public:
             nextLayer->neurons[i].ctConnectionsIn = ctNeurons + 1;
         }
     }
-    void removeNeuron(uint16_t index, Layer *nextLayer)
+    void removeNeuron(uint16_t index)
     {
+        if(index >= ctNeurons) return;
+        ////////Generate New neurons//////////////////////////////////////////////////////
+        Neuron *newNeurons = new Neuron[ctNeurons]; //One less neuron generated
+        uint16_t newNeuronIndex = 0;
+        for(uint16_t i = 0; i < ctNeurons+1; i++)
+        {
+            if(nextLayer->neurons[i].type == NONE) continue; //If bias neuron - nothing to be done
+            if(i == index) //if to be deleted
+            {
+                delete[] neurons[i].connectionsIn;
+                neurons[i].connectionsIn = nullptr;
+                continue;
+            }
+            
+            for(uint16_t j = 0; j < neurons[i].ctConnectionsIn; j++) //update connection endpoints
+            {
+                neurons[i].connectionsIn[j].toNeuron = &(newNeurons[newNeuronIndex]);
+                neurons[i].connectionsIn[j].outputVal = &(newNeurons[newNeuronIndex].inputVal);
+            }
+            newNeurons[newNeuronIndex] = neurons[i]; //copy entire neuron with connections
+            neurons[i].connectionsIn = nullptr;
+            newNeuronIndex++;
+        }
+        ctNeurons--;
+        delete[] neurons;
+        neurons = newNeurons;
+        /////////////////Fix next layer connections//////////////////////////////////////
+        for(uint16_t i = 0; i < nextLayer->ctNeurons +1; i++)
+        {
+            if(nextLayer->neurons[i].type == NONE) continue; //If bias neuron - nothing to be done
+            connection *newCon = new connection[ctNeurons+1];
+            uint16_t newconindex = 0;
+            for(uint16_t j = 0; j < nextLayer->neurons[i].ctConnectionsIn; j++)
+            {
+                if(j == index) continue;
+                newCon[newconindex] = nextLayer->neurons[i].connectionsIn[j];
+                newCon[newconindex].fromNeuron = &(neurons[newconindex]);
+                newCon[newconindex].inputVal = &(neurons[newconindex].outputVal);
+                newconindex++;
+            }
+            delete[] nextLayer->neurons[i].connectionsIn;
+            nextLayer->neurons[i].connectionsIn = newCon;
+            nextLayer->neurons[i].ctConnectionsIn = ctNeurons +1;
+        }
     }
 
     void mutate(double mutationRate)
@@ -143,7 +187,7 @@ public:
                 addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
                 break;
             case 1: // remove neuron
-                removeNeuron(rand() % ctNeurons+1, nextLayer);
+                removeNeuron(rand() % ctNeurons+1);
                 break;
             case 2: // change connection
             {
