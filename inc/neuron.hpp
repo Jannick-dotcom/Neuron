@@ -39,6 +39,7 @@ public:
     }
     ~Neuron()
     {
+        if(connectionsIn == nullptr) return;
         delete[] connectionsIn;
     }
 
