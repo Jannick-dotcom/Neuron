@@ -191,7 +191,7 @@ public:
                 break;
             case 2: // change connection
             {
-                uint16_t neuronSpecifier = rand() % ctNeurons;
+                uint16_t neuronSpecifier = rand() % ctNeurons+1;
                 uint16_t connectionSpecifier = rand() % neurons[neuronSpecifier].ctConnectionsIn;
                 double weightchange = (rand() / double(RAND_MAX) - 0.5) * mutationRate;
                 double *weight = &neurons[neuronSpecifier].connectionsIn[connectionSpecifier].weight;
@@ -200,7 +200,7 @@ public:
             }
             case 3: //change activation function
             {
-                uint16_t neuronSpecifier = rand() % ctNeurons;
+                uint16_t neuronSpecifier = rand() % ctNeurons+1;
                 ActivationFunctionType newActivationfunction = (ActivationFunctionType)(rand() % ActivationFunctionType::NONE);
                 neurons[neuronSpecifier].type = newActivationfunction;
                 break;
