@@ -32,6 +32,8 @@ public:
     ~Network()
     {
         Layer *currentLayer = firstLayer;
+        firstLayer = nullptr;
+        outputLayer = nullptr;
         while(currentLayer != nullptr)
         {
             Layer *nextLayer = currentLayer->nextLayer;
