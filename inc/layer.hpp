@@ -191,7 +191,12 @@ public:
                 break;
             case 2: // change connection
             {
-                uint16_t neuronSpecifier = rand() % ctNeurons+1;
+                uint16_t neuronSpecifier = rand() % ctNeurons;
+                if(neurons[neuronSpecifier].ctConnectionsIn == 0) 
+                {
+                    std::cout << "Somehow selected strange Neuron: " << neuronSpecifier << std::endl;
+                    return;
+                }
                 uint16_t connectionSpecifier = rand() % neurons[neuronSpecifier].ctConnectionsIn;
                 double weightchange = (rand() / double(RAND_MAX) - 0.5) * mutationRate;
                 double *weight = &neurons[neuronSpecifier].connectionsIn[connectionSpecifier].weight;
@@ -200,7 +205,7 @@ public:
             }
             case 3: //change activation function
             {
-                uint16_t neuronSpecifier = rand() % ctNeurons+1;
+                uint16_t neuronSpecifier = rand() % ctNeurons;
                 ActivationFunctionType newActivationfunction = (ActivationFunctionType)(rand() % ActivationFunctionType::NONE);
                 neurons[neuronSpecifier].type = newActivationfunction;
                 break;
