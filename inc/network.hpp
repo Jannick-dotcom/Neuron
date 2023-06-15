@@ -17,13 +17,7 @@ public:
     uint16_t ctLayers;
     double cost;
     CostFunctionType costType;
-    Network()
-    {
-        this->firstLayer = nullptr;
-        this->ctLayers = 0;
-        this->costType = CostFunctionType::CostQUADRATIC;
-    }
-    Network(CostFunctionType costType)
+    Network(CostFunctionType costType = CostFunctionType::CostQUADRATIC)
     {
         this->firstLayer = nullptr;
         this->ctLayers = 0;
