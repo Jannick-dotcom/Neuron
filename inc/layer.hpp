@@ -68,6 +68,11 @@ public:
         for(uint16_t i = 0; i < count; i++) //add new Neurons to the start of array
         {
             newNeurons[i].type = ActivationFunction;
+            if(newNeurons[i].type > NONE)
+            {
+                std::cout << "ERROR Type in newly added Neuron" << std::endl;
+                exit(1);
+            }
             newNeurons[i].ctConnectionsIn = prevLayer->ctNeurons + 1;
             newNeurons[i].connectionsIn = new connection[newNeurons[i].ctConnectionsIn];
             for(uint16_t j = 0; j < newNeurons[i].ctConnectionsIn; j++) // define connections of new neurons
@@ -84,19 +89,17 @@ public:
         {
             Neuron *nOld = &(neurons[i]);
             Neuron *nNew = &(newNeurons[count + i]);
-            nNew->connectionsIn = nOld->connectionsIn; //Transfer connections
+            *nNew = *nOld; //Copy entire neuron
             nOld->connectionsIn = nullptr; //Disown connections of old neurons (otherwise they would be deleted)
-            nNew->ctConnectionsIn = nOld->ctConnectionsIn;
-            nNew->gradientW = nOld->gradientW;
-            if(nOld->type > NONE)
-            {
-                std::cout << "ERROR Type in unchanged Neuron" << std::endl;
-            }
-            nNew->type = nOld->type;
             for(uint16_t j = 0; j < nNew->ctConnectionsIn; j++)
             {
                 nNew->connectionsIn[j].outputVal = &(nNew->inputVal);
                 nNew->connectionsIn[j].toNeuron = nNew;
+            }
+            if(nOld->type > NONE || nNew->type > NONE)
+            {
+                std::cout << "ERROR Type in unchanged Neuron: " << nNew->type << std::endl;
+                exit(1);
             }
         }
         //////////////Delete old Neurons///////////////////////////////////////////////////////////////////////
@@ -116,7 +119,7 @@ public:
                     newCon[j].toNeuron = &(nextLayer->neurons[i]);
                     newCon[j].inputVal = &(neurons[j].outputVal);
                     newCon[j].outputVal = &(nextLayer->neurons[i].inputVal);
-                    newCon[j].weight = 1;
+                    newCon[j].weight = rand() / double(RAND_MAX) - 0.5;
                     newCon[j].prevWeightChange = 0;
                 }
                 else //Already present connections
@@ -141,7 +144,6 @@ public:
         uint16_t newNeuronIndex = 0;
         for(uint16_t i = 0; i < ctNeurons+1; i++)
         {
-            if(nextLayer->neurons[i].type == NONE) continue; //If bias neuron - nothing to be done
             if(i == index) //if to be deleted
             {
                 delete[] neurons[i].connectionsIn;
@@ -155,6 +157,11 @@ public:
                 neurons[i].connectionsIn[j].outputVal = &(newNeurons[newNeuronIndex].inputVal);
             }
             newNeurons[newNeuronIndex] = neurons[i]; //copy entire neuron with connections
+            if(newNeurons[newNeuronIndex].type > NONE)
+            {
+                std::cout << "ERROR Type in copied Neuron: " << newNeurons[newNeuronIndex].type << std::endl;
+                exit(1);
+            }
             neurons[i].connectionsIn = nullptr;
             newNeuronIndex++;
         }
@@ -248,7 +255,8 @@ public:
             }
             else if(neurons[i].type > NONE)
             {
-                std::cout << "ERROR Neuron Type" << std::endl;
+                std::cout << "ERROR Neuron Type: " << neurons[i].type << std::endl;
+                exit(1);
             }
             if(neurons[i].ctConnectionsIn == 0)
             {
