@@ -85,9 +85,13 @@ public:
             Neuron *nOld = &(neurons[i]);
             Neuron *nNew = &(newNeurons[count + i]);
             nNew->connectionsIn = nOld->connectionsIn; //Transfer connections
-            nNew->ctConnectionsIn = nOld->ctConnectionsIn;
             nOld->connectionsIn = nullptr; //Disown connections of old neurons (otherwise they would be deleted)
+            nNew->ctConnectionsIn = nOld->ctConnectionsIn;
             nNew->gradientW = nOld->gradientW;
+            if(nOld->type > NONE)
+            {
+                std::cout << "ERROR Type in unchanged Neuron" << std::endl;
+            }
             nNew->type = nOld->type;
             for(uint16_t j = 0; j < nNew->ctConnectionsIn; j++)
             {
@@ -108,21 +112,21 @@ public:
             {
                 if(j < count) //Newly added neuron connection
                 {
-                    newCon->fromNeuron = &(neurons[j]);
-                    newCon->toNeuron = &(nextLayer->neurons[i]);
-                    newCon->inputVal = &(neurons[j].outputVal);
-                    newCon->outputVal = &(nextLayer->neurons[i].inputVal);
-                    newCon->weight = 1;
-                    newCon->prevWeightChange = 0;
+                    newCon[j].fromNeuron = &(neurons[j]);
+                    newCon[j].toNeuron = &(nextLayer->neurons[i]);
+                    newCon[j].inputVal = &(neurons[j].outputVal);
+                    newCon[j].outputVal = &(nextLayer->neurons[i].inputVal);
+                    newCon[j].weight = 1;
+                    newCon[j].prevWeightChange = 0;
                 }
                 else //Already present connections
                 {
-                    newCon->fromNeuron = &(neurons[j]);
-                    newCon->inputVal = &(neurons[j].outputVal);
-                    newCon->toNeuron = &(nextLayer->neurons[i]);
-                    newCon->outputVal = &(nextLayer->neurons[i].inputVal);
-                    newCon->weight = nextLayer->neurons[i].connectionsIn[j - count].weight;
-                    newCon->prevWeightChange = nextLayer->neurons[i].connectionsIn[j - count].prevWeightChange;
+                    newCon[j].fromNeuron = &(neurons[j]);
+                    newCon[j].inputVal = &(neurons[j].outputVal);
+                    newCon[j].toNeuron = &(nextLayer->neurons[i]);
+                    newCon[j].outputVal = &(nextLayer->neurons[i].inputVal);
+                    newCon[j].weight = nextLayer->neurons[i].connectionsIn[j - count].weight;
+                    newCon[j].prevWeightChange = nextLayer->neurons[i].connectionsIn[j - count].prevWeightChange;
                 }
             }
             nextLayer->neurons[i].connectionsIn = newCon;
@@ -238,14 +242,14 @@ public:
     {
         for (uint16_t i = 0; i < ctNeurons+1; i++)
         {
-            if(neurons[i].type != NONE)
+            if(neurons[i].type < NONE)
             {
                 file << neurons[i].type;
             }
-            // else
-            // {
-            //     file << "biasNeuron";
-            // }
+            else if(neurons[i].type > NONE)
+            {
+                std::cout << "ERROR Neuron Type" << std::endl;
+            }
             if(neurons[i].ctConnectionsIn == 0)
             {
                 file << "\n";
