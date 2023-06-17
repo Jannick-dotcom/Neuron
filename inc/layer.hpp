@@ -82,6 +82,7 @@ public:
                 tempCurrCon->toNeuron = &(newNeurons[i]);
                 tempCurrCon->inputVal = &(tempCurrCon->fromNeuron->outputVal);
                 tempCurrCon->outputVal = &(tempCurrCon->toNeuron->inputVal);
+                tempCurrCon->weight = rand() / double(RAND_MAX) - 0.5;
             }
         }
         //////////////Copy not change neurons///////////////////////////////////////////////////////////////////
@@ -258,11 +259,6 @@ public:
                 std::cout << "ERROR Neuron Type: " << neurons[i].type << std::endl;
                 exit(1);
             }
-            if(neurons[i].ctConnectionsIn == 0)
-            {
-                file << "\n";
-                continue;
-            }
 
             for (uint16_t c = 0; c < neurons[i].ctConnectionsIn; c++)
             {
@@ -270,6 +266,5 @@ public:
             }
             file << std::endl;
         }
-        file << std::endl;
     }
 };
