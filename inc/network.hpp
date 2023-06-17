@@ -251,10 +251,6 @@ public:
                 std::string weight = str.substr(start, end - start); //Get the weight of the connection
                 double weightVal = std::stod(weight); //Convert the weight to a double
                 currentNeuron->connectionsIn[connectionIndex].weight = weightVal;
-                currentNeuron->connectionsIn[connectionIndex].fromNeuron = currentLayer->prevLayer->neurons + connectionIndex;
-                currentNeuron->connectionsIn[connectionIndex].toNeuron = currentNeuron;
-                currentNeuron->connectionsIn[connectionIndex].inputVal = &currentLayer->prevLayer->neurons[connectionIndex].outputVal;
-                currentNeuron->connectionsIn[connectionIndex].outputVal = &currentNeuron->inputVal;
                 connectionIndex++;
                 globalStart = end;
                 if(connectionIndex == currentNeuron->ctConnectionsIn) //If the current neuron has no more connections
@@ -266,7 +262,6 @@ public:
                     {
                         break;
                     }
-                    // currentNeuron->connectionsIn = new connection[currentNeuron->ctConnectionsIn+1];
                 }
             }
             else //If the connection is invalid
