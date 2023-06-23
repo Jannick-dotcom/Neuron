@@ -208,7 +208,7 @@ public:
         file.open(fileName);
         Layer *currentLayer = firstLayer;
         uint16_t layerNum = 0;
-        file << "Cost: " << cost << std::endl;
+        // file << "Cost: " << cost << std::endl;
         while(currentLayer != nullptr)
         {
             file << "Layer" << layerNum << ": " << currentLayer->ctNeurons << std::endl;
