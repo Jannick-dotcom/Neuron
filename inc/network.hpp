@@ -249,8 +249,11 @@ public:
             if(start != (uint32_t)-1 && end != (uint32_t)-1) //If the connection is valid
             {
                 std::string weight = str.substr(start, end - start); //Get the weight of the connection
-                double weightVal = std::stod(weight); //Convert the weight to a double
-                currentNeuron->connectionsIn[connectionIndex].weight = weightVal;
+                // double weightVal = std::stod(weight); //Convert the weight to a double
+                uint64_t weightValInt = std::stoul(weight);
+                double weightValDouble;
+                std::memcpy(&weightValDouble, &weightValInt, sizeof(double));
+                currentNeuron->connectionsIn[connectionIndex].weight = weightValDouble;
                 connectionIndex++;
                 globalStart = end;
                 if(connectionIndex == currentNeuron->ctConnectionsIn) //If the current neuron has no more connections

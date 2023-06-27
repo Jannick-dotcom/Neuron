@@ -4,6 +4,8 @@
 #include "mutationHelper.hpp"
 #include <iostream>
 #include <fstream>
+#include <iomanip>
+#include <cstring>
 
 class Layer
 {
@@ -262,7 +264,9 @@ public:
 
             for (uint16_t c = 0; c < neurons[i].ctConnectionsIn; c++)
             {
-                file << ", " << neurons[i].connectionsIn[c].weight;
+                uint64_t iWeight;
+                memcpy(&iWeight, &(neurons[i].connectionsIn[c].weight), sizeof(double));
+                file << ", " << iWeight;//std::setprecision(20) << neurons[i].connectionsIn[c].weight;
             }
             file << std::endl;
         }
