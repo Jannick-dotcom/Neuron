@@ -194,7 +194,15 @@ public:
     void mutate(double mutationRate)
     {
         //to leave the chance that the layer does not mutate at all, we do modulo n+1
-        uint8_t mutationSpecifier = rand() % 4; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
+        uint8_t mutationSpecifier; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
+        if(nextLayer == nullptr) 
+        {
+            mutationSpecifier = 2; //if current layer is output layer, force only changing the weights
+        }
+        else
+        {
+            mutationSpecifier = rand() % 4; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
+        }
         switch (mutationSpecifier)
         {
             case 0: // add neuron
