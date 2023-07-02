@@ -297,6 +297,7 @@ public:
             else
             {
                 std::cout << "ERROR: Activation function not found" << std::endl;
+                throw std::system_error();
                 return nullptr;
             }
         }

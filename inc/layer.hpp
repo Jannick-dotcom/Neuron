@@ -73,6 +73,7 @@ public:
             if(newNeurons[i].type > NONE)
             {
                 std::cout << "ERROR Type in newly added Neuron" << std::endl;
+                throw std::system_error();
                 exit(1);
             }
             newNeurons[i].ctConnectionsIn = prevLayer->ctNeurons + 1;
@@ -102,6 +103,7 @@ public:
             if(nOld->type > NONE || nNew->type > NONE)
             {
                 std::cout << "ERROR Type in unchanged Neuron: " << nNew->type << std::endl;
+                throw std::system_error();
                 exit(1);
             }
         }
@@ -163,6 +165,7 @@ public:
             if(newNeurons[newNeuronIndex].type > NONE)
             {
                 std::cout << "ERROR Type in copied Neuron: " << newNeurons[newNeuronIndex].type << std::endl;
+                throw std::system_error();
                 exit(1);
             }
             neurons[i].connectionsIn = nullptr;
@@ -217,6 +220,7 @@ public:
                 if(neurons[neuronSpecifier].ctConnectionsIn == 0) 
                 {
                     std::cout << "Somehow selected strange Neuron: " << neuronSpecifier << std::endl;
+                    throw std::system_error();
                     return;
                 }
                 uint16_t connectionSpecifier = rand() % neurons[neuronSpecifier].ctConnectionsIn;
@@ -267,6 +271,7 @@ public:
             else if(neurons[i].type > NONE)
             {
                 std::cout << "ERROR Neuron Type: " << neurons[i].type << std::endl;
+                throw std::system_error();
                 exit(1);
             }
 
