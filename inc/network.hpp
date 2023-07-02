@@ -15,7 +15,7 @@ public:
     Layer *firstLayer;
     Layer *outputLayer;
     uint16_t ctLayers;
-    double cost;
+    volatile double cost;
     CostFunctionType costType;
     Network(CostFunctionType costType = CostFunctionType::CostQUADRATIC)
     {
@@ -208,7 +208,7 @@ public:
         file.open(fileName);
         Layer *currentLayer = firstLayer;
         uint16_t layerNum = 0;
-        // file << "Cost: " << cost << std::endl;
+        file << "Cost: " << cost << std::endl;
         while(currentLayer != nullptr)
         {
             file << "Layer" << layerNum << ": " << currentLayer->ctNeurons << std::endl;
@@ -283,12 +283,12 @@ public:
 
         std::string layerNum = str.substr(layerIndex + 5, str.find(":", layerIndex+5) - layerIndex - 5);
         std::string ctNeurons = str.substr(str.find(":",layerIndex) + 2, str.find("\n", layerIndex) - str.find(":", layerIndex) - 2);
-
+        layerIndex = str.find("\n", layerIndex+1);
         Layer *newLayer = addLayer(std::stoi(ctNeurons), NONE);
         for(uint16_t i = 0; i < newLayer->ctNeurons; i++)
         {
             std::string actString = str.substr(str.find("\n",layerIndex) + 1, str.find(",",layerIndex) - str.find("\n",layerIndex) - 1);
-            ActivationFunctionType activationFunction = (ActivationFunctionType)std::stoi(actString);
+            ActivationFunctionType activationFunction = (ActivationFunctionType)std::stoi(actString); ////////////////Kacke !!!!!!!!!!!!!!!!!!!
             layerIndex = str.find("\n", layerIndex+1);
             if(activationFunction < NONE) 
             {
@@ -311,6 +311,7 @@ public:
         
         while(std::getline(file, line))
         {
+            if(line.find("Cost:") != std::string::npos) continue;
             if(line != "")
             {
                 lines.append(line);
