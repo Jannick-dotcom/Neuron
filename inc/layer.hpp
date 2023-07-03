@@ -137,6 +137,7 @@ public:
                     newCon[j].prevWeightChange = nextLayer->neurons[i].connectionsIn[j - count].prevWeightChange;
                 }
             }
+            delete[] nextLayer->neurons[i].connectionsIn;
             nextLayer->neurons[i].connectionsIn = newCon;
             nextLayer->neurons[i].ctConnectionsIn = ctNeurons + 1;
         }
