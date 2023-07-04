@@ -72,7 +72,7 @@ public:
             newNeurons[i].type = ActivationFunction;
             if(newNeurons[i].type > NONE)
             {
-                std::cout << "ERROR Type in newly added Neuron" << std::endl;
+                std::cout << "ERROR Type in newly added Neuron" << "\n";
                 throw std::system_error();
                 exit(1);
             }
@@ -102,7 +102,7 @@ public:
             }
             if(nOld->type > NONE || nNew->type > NONE)
             {
-                std::cout << "ERROR Type in unchanged Neuron: " << nNew->type << std::endl;
+                std::cout << "ERROR Type in unchanged Neuron: " << nNew->type << "\n";
                 throw std::system_error();
                 exit(1);
             }
@@ -165,7 +165,7 @@ public:
             newNeurons[newNeuronIndex] = neurons[i]; //copy entire neuron with connections
             if(newNeurons[newNeuronIndex].type > NONE)
             {
-                std::cout << "ERROR Type in copied Neuron: " << newNeurons[newNeuronIndex].type << std::endl;
+                std::cout << "ERROR Type in copied Neuron: " << newNeurons[newNeuronIndex].type << "\n";
                 throw std::system_error();
                 exit(1);
             }
@@ -220,7 +220,7 @@ public:
                 uint16_t neuronSpecifier = rand() % ctNeurons;
                 if(neurons[neuronSpecifier].ctConnectionsIn == 0) 
                 {
-                    std::cout << "Somehow selected strange Neuron: " << neuronSpecifier << std::endl;
+                    std::cout << "Somehow selected strange Neuron: " << neuronSpecifier << "\n";
                     throw std::system_error();
                     return;
                 }
@@ -257,9 +257,9 @@ public:
             {
                 std::cout << neurons[i].connectionsIn[c].weight << "\t ";
             }
-            std::cout << i << ": " << neurons[i].inputVal << " -> " << neurons[i].outputVal << std::endl;
+            std::cout << i << ": " << neurons[i].inputVal << " -> " << neurons[i].outputVal << "\n";
         }
-        std::cout << std::endl;
+        std::cout << "\n";
     }
     void exportToFile(std::ofstream &file)
     {
@@ -271,7 +271,7 @@ public:
             }
             else if(neurons[i].type > NONE)
             {
-                std::cout << "ERROR Neuron Type: " << neurons[i].type << std::endl;
+                std::cout << "ERROR Neuron Type: " << neurons[i].type << "\n";
                 throw std::system_error();
                 exit(1);
             }
@@ -282,7 +282,7 @@ public:
                 memcpy(&iWeight, &(neurons[i].connectionsIn[c].weight), sizeof(double));
                 file << ", " << iWeight;//std::setprecision(20) << neurons[i].connectionsIn[c].weight;
             }
-            file << std::endl;
+            file << "\n";
         }
     }
 };

@@ -195,7 +195,7 @@ public:
         uint16_t layerNum = 0;
         while(currentLayer != nullptr)
         {
-            std::cout << "Layer " << layerNum << std::endl;
+            std::cout << "Layer " << layerNum << "\n";
             currentLayer->print();
             currentLayer = currentLayer->nextLayer;
             layerNum++;
@@ -208,10 +208,10 @@ public:
         file.open(fileName);
         Layer *currentLayer = firstLayer;
         uint16_t layerNum = 0;
-        file << "Cost: " << cost << std::endl;
+        file << "Cost: " << cost << "\n";
         while(currentLayer != nullptr)
         {
-            file << "Layer" << layerNum << ": " << currentLayer->ctNeurons << std::endl;
+            file << "Layer" << layerNum << ": " << currentLayer->ctNeurons << "\n";
             currentLayer->exportToFile(file);
             currentLayer = currentLayer->nextLayer;
             layerNum++;
@@ -296,7 +296,7 @@ public:
             }
             else
             {
-                std::cout << "ERROR: Activation function not found" << std::endl;
+                std::cout << "ERROR: Activation function not found" << "\n";
                 throw std::system_error();
                 return nullptr;
             }

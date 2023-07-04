@@ -66,6 +66,6 @@ public:
             std::cout << connectionsIn[i].inputVal << " ";
             std::cout << connectionsIn[i].outputVal << " ";
         }
-        std::cout << std::endl;
+        std::cout << "\n";
     }
 };
