@@ -14,7 +14,7 @@ public:
     connection *connectionsIn;
     u_int32_t ctConnectionsIn;
     ActivationFunctionType type;
-    void updateInput()
+    __device__ void updateInput()
     {
         if(connectionsIn != nullptr)
         {
@@ -25,7 +25,7 @@ public:
             }
         }
     }
-    void activation(double inputVal)
+    __device__ void activation(double inputVal)
     {
         outputVal = activationFunction(type, inputVal);
     }
@@ -51,7 +51,7 @@ public:
     {
         return outputVal;
     }
-    void feedThrough()
+    __device__ void feedThrough()
     {
         updateInput();
         activation(inputVal);
@@ -67,5 +67,23 @@ public:
             std::cout << connectionsIn[i].outputVal << " ";
         }
         std::cout << "\n";
+    }
+    void * operator new(size_t size)
+    {
+        void *p;
+        cudaMallocManaged(&p, size);
+        return p;
+    }
+    void * operator new[](size_t size)
+    {
+        void *p;
+        cudaMallocManaged(&p, size);
+        return p;
+    }
+ 
+    void operator delete(void * p)
+    {
+        cudaFree(p);
+        free(p);
     }
 };

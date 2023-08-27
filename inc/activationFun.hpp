@@ -12,7 +12,7 @@ typedef enum {
     NONE
 } ActivationFunctionType;
 
-double activationFunction(ActivationFunctionType type, double input)
+__device__ double activationFunction(ActivationFunctionType type, double input)
 {
     switch (type)
     {
@@ -37,7 +37,7 @@ double activationFunction(ActivationFunctionType type, double input)
     }
 }
 
-double activationFunctionDerivative(ActivationFunctionType type, double input)
+__device__ double activationFunctionDerivative(ActivationFunctionType type, double input)
 {
     switch (type)
     {

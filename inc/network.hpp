@@ -59,7 +59,7 @@ public:
         }
     }
 
-    void feedThrough(dataPoint data)
+    __device__ void feedThrough(dataPoint data)
     {
         Layer *currentLayer = firstLayer;
         if(currentLayer == nullptr)
@@ -77,7 +77,7 @@ public:
             currentLayer = currentLayer->nextLayer;
         }
     }
-    void feedThrough()
+    __device__ void feedThrough()
     {
         Layer *currentLayer = firstLayer;
         if(currentLayer == nullptr)
@@ -103,33 +103,33 @@ public:
         }
     }
     
-    double nodeCost(double output, double target)
+    __device__ double nodeCost(double output, double target)
     {
         return costFunction(costType, output, target);
     }
 
-    double dcost_dout(double expected, double actual)
+    __device__ double dcost_dout(double expected, double actual)
     {
         return costFunctionDerivative(costType ,actual, expected);
     }
-    double dOut_dWin(Neuron n, double w_in)
+    __device__ double dOut_dWin(Neuron n, double w_in)
     {
         return activationFunctionDerivative(n.type, w_in);
     }
-    double dWin_dW(double input)
+    __device__ double dWin_dW(double input)
     {
         return input;
     }
-    double dWin_dB()
+    __device__ double dWin_dB()
     {
         return 1;
     }
-    double dWin_dIn(double weight)
+    __device__ double dWin_dIn(double weight)
     {
         return weight;
     }
     
-    void updateWeightsAndBiases(double learnRate, double momentumFactor)
+    __device__ void updateWeightsAndBiases(double learnRate, double momentumFactor)
     {
         Layer *currentLayer = firstLayer->nextLayer;
         while(currentLayer != nullptr)
@@ -148,7 +148,7 @@ public:
         clearGradients();
     }
 
-    void mutate(double mutationRate) //Mutate the network by a certain rate
+    __device__ void mutate(double mutationRate) //Mutate the network by a certain rate
     {
         uint8_t layerSpecifier = (rand() % (ctLayers-1)) + 1; //select a random layer
         //Also give the chance that no layer is mutated (By excluding the first and last layer)
@@ -160,7 +160,7 @@ public:
             currentLayer = currentLayer->nextLayer; //Get the specified random layer
         currentLayer->mutate(mutationRate); //Mutate the specified layer
     }
-    void learn(double *expected) //Improve the network based on the defined cost function and expected outputs
+    __device__ void learn(double *expected) //Improve the network based on the defined cost function and expected outputs
     {
         Layer *currentLayer = firstLayer;
         while(currentLayer->nextLayer != nullptr) currentLayer = currentLayer->nextLayer; //Get last layer
@@ -330,5 +330,15 @@ public:
         }
 
         file.close();
+    }
+    void* operator new(size_t size)
+    {
+        void *temp;
+        cudaMallocManaged(&temp, size);
+        return temp;
+    }
+    void operator delete(void* ptr)
+    {
+        cudaFree(ptr);
     }
 };

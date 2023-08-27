@@ -35,7 +35,7 @@ public:
         this->weight = conn.weight;
         this->prevWeightChange = conn.prevWeightChange;
     }
-    void feedThrough()
+    __device__ void feedThrough()
     {
         if(weight == 0.0)
             return;
@@ -43,5 +43,21 @@ public:
             *outputVal += *inputVal * weight;
         else
             weight = 0;
+    }
+    void* operator new(size_t size)
+    {
+                void *temp;
+        cudaMallocManaged(&temp, size);
+        return temp;
+    }
+    void * operator new[](size_t size)
+    {
+                void *p;
+        cudaMallocManaged(&p, size);
+        return p;
+    }
+    void operator delete(void* ptr)
+    {
+        cudaFree(ptr);
     }
 };

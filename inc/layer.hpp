@@ -241,13 +241,14 @@ public:
                 break;
         }
     }
-
-    void feedThrough()
+    __device__ void feedThrough()
     {
         for (uint16_t i = 0; i < ctNeurons+1; i++)
         {
             neurons[i].feedThrough();
         }
+        if(nextLayer != nullptr)
+            nextLayer->feedThrough();
     }
     void print()
     {
@@ -284,5 +285,15 @@ public:
             }
             file << "\n";
         }
+    }
+    void* operator new(size_t size)
+    {
+        void *temp;
+        cudaMallocManaged(&temp, size);
+        return temp;
+    }
+    void operator delete(void* ptr)
+    {
+        cudaFree(ptr);
     }
 };
