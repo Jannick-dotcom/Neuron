@@ -77,6 +77,7 @@ public:
         }
         std::cout << "\n";
     }
+    #ifdef useGPU
     void * operator new(size_t size)
     {
         void *p;
@@ -95,4 +96,5 @@ public:
         cudaFree(p);
         free(p);
     }
+    #endif
 };
