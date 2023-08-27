@@ -241,7 +241,10 @@ public:
                 break;
         }
     }
-    __device__ void feedThrough()
+    #ifdef useGPU
+    __device__
+    #endif
+    void feedThrough()
     {
         for (uint16_t i = 0; i < ctNeurons+1; i++)
         {
@@ -286,6 +289,7 @@ public:
             file << "\n";
         }
     }
+    #ifdef useGPU
     void* operator new(size_t size)
     {
         void *temp;
@@ -296,4 +300,5 @@ public:
     {
         cudaFree(ptr);
     }
+    #endif
 };

@@ -35,7 +35,10 @@ public:
         this->weight = conn.weight;
         this->prevWeightChange = conn.prevWeightChange;
     }
-    __device__ void feedThrough()
+    #ifdef useGPU
+    __device__ 
+    #endif
+    void feedThrough()
     {
         if(weight == 0.0)
             return;
@@ -44,15 +47,16 @@ public:
         else
             weight = 0;
     }
+    #ifdef useGPU
     void* operator new(size_t size)
     {
-                void *temp;
+        void *temp;
         cudaMallocManaged(&temp, size);
         return temp;
     }
     void * operator new[](size_t size)
     {
-                void *p;
+        void *p;
         cudaMallocManaged(&p, size);
         return p;
     }
@@ -60,4 +64,5 @@ public:
     {
         cudaFree(ptr);
     }
+    #endif
 };

@@ -58,8 +58,10 @@ public:
             return currentLayer->nextLayer;
         }
     }
-
-    __device__ void feedThrough(dataPoint data)
+    #ifdef useGPU
+    __device__ 
+    #endif
+    void feedThrough(dataPoint data)
     {
         Layer *currentLayer = firstLayer;
         if(currentLayer == nullptr)
@@ -77,7 +79,10 @@ public:
             currentLayer = currentLayer->nextLayer;
         }
     }
-    __device__ void feedThrough()
+    #ifdef useGPU
+    __device__ 
+    #endif
+    void feedThrough()
     {
         Layer *currentLayer = firstLayer;
         if(currentLayer == nullptr)
@@ -102,34 +107,53 @@ public:
             currentLayer = currentLayer->nextLayer;
         }
     }
-    
-    __device__ double nodeCost(double output, double target)
+    #ifdef useGPU
+    __device__ 
+    #endif
+    double nodeCost(double output, double target)
     {
         return costFunction(costType, output, target);
     }
-
-    __device__ double dcost_dout(double expected, double actual)
+    #ifdef useGPU
+    __device__ 
+    #endif
+    double dcost_dout(double expected, double actual)
     {
         return costFunctionDerivative(costType ,actual, expected);
     }
-    __device__ double dOut_dWin(Neuron n, double w_in)
+    #ifdef useGPU
+    __device__ 
+    #endif
+    double dOut_dWin(Neuron n, double w_in)
     {
         return activationFunctionDerivative(n.type, w_in);
     }
-    __device__ double dWin_dW(double input)
+    #ifdef useGPU
+    __device__ 
+    #endif
+    double dWin_dW(double input)
     {
         return input;
     }
-    __device__ double dWin_dB()
+    #ifdef useGPU
+    __device__ 
+    #endif
+    double dWin_dB()
     {
         return 1;
     }
-    __device__ double dWin_dIn(double weight)
+    #ifdef useGPU
+    __device__ 
+    #endif
+    double dWin_dIn(double weight)
     {
         return weight;
     }
     
-    __device__ void updateWeightsAndBiases(double learnRate, double momentumFactor)
+    #ifdef useGPU
+    __device__ 
+    #endif
+    void updateWeightsAndBiases(double learnRate, double momentumFactor)
     {
         Layer *currentLayer = firstLayer->nextLayer;
         while(currentLayer != nullptr)
@@ -148,7 +172,10 @@ public:
         clearGradients();
     }
 
-    __device__ void mutate(double mutationRate) //Mutate the network by a certain rate
+    #ifdef useGPU
+    __device__ 
+    #endif
+    void mutate(double mutationRate) //Mutate the network by a certain rate
     {
         uint8_t layerSpecifier = (rand() % (ctLayers-1)) + 1; //select a random layer
         //Also give the chance that no layer is mutated (By excluding the first and last layer)
@@ -159,7 +186,10 @@ public:
             currentLayer = currentLayer->nextLayer; //Get the specified random layer
         currentLayer->mutate(mutationRate); //Mutate the specified layer
     }
-    __device__ void learn(double *expected) //Improve the network based on the defined cost function and expected outputs
+    #ifdef useGPU
+    __device__ 
+    #endif
+    void learn(double *expected) //Improve the network based on the defined cost function and expected outputs
     {
         Layer *currentLayer = firstLayer;
         while(currentLayer->nextLayer != nullptr) currentLayer = currentLayer->nextLayer; //Get last layer
@@ -330,6 +360,7 @@ public:
 
         file.close();
     }
+    #ifdef useGPU
     void* operator new(size_t size)
     {
         void *temp;
@@ -340,4 +371,5 @@ public:
     {
         cudaFree(ptr);
     }
+    #endif
 };

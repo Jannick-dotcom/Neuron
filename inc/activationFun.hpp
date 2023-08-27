@@ -12,7 +12,10 @@ typedef enum {
     NONE
 } ActivationFunctionType;
 
-__device__ double activationFunction(ActivationFunctionType type, double input)
+#ifdef useGPU
+__device__ 
+#endif
+double activationFunction(ActivationFunctionType type, double input)
 {
     switch (type)
     {
@@ -37,7 +40,10 @@ __device__ double activationFunction(ActivationFunctionType type, double input)
     }
 }
 
-__device__ double activationFunctionDerivative(ActivationFunctionType type, double input)
+#ifdef useGPU
+__device__ 
+#endif
+double activationFunctionDerivative(ActivationFunctionType type, double input)
 {
     switch (type)
     {
