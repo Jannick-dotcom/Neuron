@@ -7,8 +7,6 @@
 #include "cost.hpp"
 #include <fstream>
 
-typedef unsigned short uint16_t;
-
 class Network
 {
 public:
