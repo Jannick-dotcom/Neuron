@@ -14,7 +14,10 @@ public:
     connection *connectionsIn;
     u_int32_t ctConnectionsIn;
     ActivationFunctionType type;
-    __device__ void updateInput()
+    #ifdef useGPU
+    __device__ 
+    #endif
+    void updateInput()
     {
         if(connectionsIn != nullptr)
         {
@@ -25,7 +28,10 @@ public:
             }
         }
     }
-    __device__ void activation(double inputVal)
+    #ifdef useGPU
+    __device__ 
+    #endif
+    void activation(double inputVal)
     {
         outputVal = activationFunction(type, inputVal);
     }
@@ -51,7 +57,10 @@ public:
     {
         return outputVal;
     }
-    __device__ void feedThrough()
+    #ifdef useGPU
+    __device__ 
+    #endif
+    void feedThrough()
     {
         updateInput();
         activation(inputVal);
