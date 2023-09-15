@@ -7,8 +7,6 @@
 #include "cost.hpp"
 #include <fstream>
 
-typedef unsigned short uint16_t;
-
 class Network
 {
 public:
@@ -124,7 +122,7 @@ public:
     #ifdef useGPU
     __device__ 
     #endif
-    double dOut_dWin(Neuron n, double w_in)
+    double dOut_dWin(Neuron &n, double w_in)
     {
         return activationFunctionDerivative(n.type, w_in);
     }
