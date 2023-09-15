@@ -265,7 +265,7 @@ public:
         }
         std::cout << "\n";
     }
-    void exportToFile(std::ofstream &file)
+    void exportToFile(std::ofstream &file, bool humanReadable)
     {
         for (uint16_t i = 0; i < ctNeurons+1; i++)
         {
@@ -282,9 +282,16 @@ public:
 
             for (uint16_t c = 0; c < neurons[i].ctConnectionsIn; c++)
             {
-                uint64_t iWeight;
-                memcpy(&iWeight, &(neurons[i].connectionsIn[c].weight), sizeof(double));
-                file << ", " << iWeight;//std::setprecision(20) << neurons[i].connectionsIn[c].weight;
+                if(!humanReadable)
+                {
+                    uint64_t iWeight;
+                    memcpy(&iWeight, &(neurons[i].connectionsIn[c].weight), sizeof(double));
+                    file << ", " << iWeight;//std::setprecision(20) << neurons[i].connectionsIn[c].weight;
+                }
+                else
+                {
+                    file << ", " << neurons[i].connectionsIn[c].weight;
+                }
             }
             file << "\n";
         }

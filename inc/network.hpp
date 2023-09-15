@@ -231,7 +231,7 @@ public:
         }
     }
     
-    void exportNetwork(std::string fileName) //Export the network to a file (For later use) and for analysis
+    void exportNetwork(std::string fileName, bool humanReadable = false) //Export the network to a file (For later use) and for analysis
     {
         std::ofstream file;
         file.open(fileName);
@@ -241,7 +241,7 @@ public:
         while(currentLayer != nullptr)
         {
             file << "Layer" << layerNum << ": " << currentLayer->ctNeurons << "\n";
-            currentLayer->exportToFile(file);
+            currentLayer->exportToFile(file, humanReadable);
             currentLayer = currentLayer->nextLayer;
             layerNum++;
         }
