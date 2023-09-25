@@ -19,7 +19,7 @@ public:
         this->toNeuron = nullptr;
         this->weight = 1.0;
     }
-    connection(double *in, double *out, double weight, double bias)
+    connection(double *in, double *out, double weight)
     {
         this->inputVal = in;
         this->outputVal = out;
