@@ -15,7 +15,7 @@ public:
     Layer *nextLayer;
     Layer *prevLayer;
 
-    Layer(long ctNeurons, Layer *prevLayer, ActivationFunctionType ActivationFunction)
+    Layer(uint16_t ctNeurons, Layer *prevLayer, ActivationFunctionType ActivationFunction)
     {
         this->ctNeurons = ctNeurons;
         this->neurons = new Neuron[ctNeurons+1];
@@ -110,7 +110,7 @@ public:
         //////////////Delete old Neurons///////////////////////////////////////////////////////////////////////
         delete[] neurons;
         neurons = newNeurons;
-        ctNeurons += count;
+        ctNeurons = uint16_t(ctNeurons + count);
         //////////////Change next layer connections to new neurons/////////////////////////////////////////////
         for(uint16_t i = 0; i < nextLayer->ctNeurons + 1; i++)
         {
@@ -205,7 +205,7 @@ public:
         }
         else
         {
-            mutationSpecifier = rand() % 4; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
+            mutationSpecifier = uint8_t(rand() % 4); // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
         }
         switch (mutationSpecifier)
         {
@@ -213,18 +213,18 @@ public:
                 addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
                 break;
             case 1: // remove neuron
-                removeNeuron(rand() % ctNeurons+1);
+                removeNeuron(uint16_t(rand() % ctNeurons+1));
                 break;
             case 2: // change connection
             {
-                uint16_t neuronSpecifier = rand() % ctNeurons;
+                uint16_t neuronSpecifier = uint16_t(rand() % ctNeurons);
                 if(neurons[neuronSpecifier].ctConnectionsIn == 0) 
                 {
                     std::cout << "Somehow selected strange Neuron: " << neuronSpecifier << "\n";
                     throw std::system_error();
                     return;
                 }
-                uint16_t connectionSpecifier = rand() % neurons[neuronSpecifier].ctConnectionsIn;
+                uint16_t connectionSpecifier = uint16_t(rand() % neurons[neuronSpecifier].ctConnectionsIn);
                 double weightchange = (rand() / double(RAND_MAX) - 0.5) * mutationRate;
                 double *weight = &neurons[neuronSpecifier].connectionsIn[connectionSpecifier].weight;
                 *weight += weightchange;
@@ -232,7 +232,7 @@ public:
             }
             case 3: //change activation function
             {
-                uint16_t neuronSpecifier = rand() % ctNeurons;
+                uint16_t neuronSpecifier = uint16_t(rand() % ctNeurons);
                 ActivationFunctionType newActivationfunction = (ActivationFunctionType)(rand() % ActivationFunctionType::NONE);
                 neurons[neuronSpecifier].type = newActivationfunction;
                 break;
