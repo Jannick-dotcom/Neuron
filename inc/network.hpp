@@ -13,7 +13,7 @@ public:
     Layer *firstLayer;
     Layer *outputLayer;
     uint16_t ctLayers;
-    volatile double cost;
+    double cost;
     CostFunctionType costType;
     Network(CostFunctionType costType = CostFunctionType::CostQUADRATIC)
     {
@@ -235,7 +235,6 @@ public:
         file.open(fileName);
         Layer *currentLayer = firstLayer;
         uint16_t layerNum = 0;
-        file << "Cost: " << cost << "\n";
         while(currentLayer != nullptr)
         {
             file << "Layer" << layerNum << ": " << currentLayer->ctNeurons << "\n";
