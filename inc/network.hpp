@@ -56,9 +56,6 @@ public:
             return currentLayer->nextLayer;
         }
     }
-    #ifdef useGPU
-    __device__ 
-    #endif
     void feedThrough(dataPoint data)
     {
         Layer *currentLayer = firstLayer;
@@ -77,9 +74,6 @@ public:
             currentLayer = currentLayer->nextLayer;
         }
     }
-    #ifdef useGPU
-    __device__ 
-    #endif
     void feedThrough()
     {
         Layer *currentLayer = firstLayer;

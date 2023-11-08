@@ -242,14 +242,21 @@ public:
         }
     }
     #ifdef useGPU
-    __device__
+    __global__ friend void feedThroughGpu(Layer *layer);
     #endif
+
     void feedThrough()
     {
+        #ifdef useGPU
+        dim3 threadsPerBlock(ctNeurons+1, 1);
+        feedThroughGpu<<<1,threadsPerBlock>>>(this);
+        cudaDeviceSynchronize();
+        #else
         for (uint16_t i = 0; i < ctNeurons+1; i++)
         {
             neurons[i].feedThrough();
         }
+        #endif
         if(nextLayer != nullptr)
             nextLayer->feedThrough();
     }

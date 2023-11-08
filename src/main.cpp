@@ -96,7 +96,8 @@ int main()
     net->addLayer(100, RELU);
     net->addLayer(1, LINEAR);
     net->cost = 100;
-    doMutating(net, 100, 50);
+    // doMutating(net, 100, 50);
+    doLearning(net);
     delete net;
     return 0;
 }
