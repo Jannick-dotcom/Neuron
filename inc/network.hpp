@@ -13,7 +13,7 @@ public:
     Layer *firstLayer;
     Layer *outputLayer;
     uint16_t ctLayers;
-    volatile double cost;
+    double cost;
     CostFunctionType costType;
     Network(CostFunctionType costType = CostFunctionType::CostQUADRATIC)
     {
@@ -34,7 +34,7 @@ public:
         }
     }
 
-    Layer *addLayer(long ctNeurons, ActivationFunctionType activationFunction)
+    Layer *addLayer(uint16_t ctNeurons, ActivationFunctionType activationFunction)
     {
         if(firstLayer == nullptr || ctLayers == 0)
         {
@@ -116,7 +116,7 @@ public:
     #ifdef useGPU
     __device__ 
     #endif
-    double dOut_dWin(Neuron n, double w_in)
+    double dOut_dWin(Neuron &n, double w_in)
     {
         return activationFunctionDerivative(n.type, w_in);
     }
@@ -169,7 +169,7 @@ public:
     #endif
     void mutate(double mutationRate) //Mutate the network by a certain rate
     {
-        uint8_t layerSpecifier = (rand() % (ctLayers-1)) + 1; //select a random layer
+        uint8_t layerSpecifier = uint8_t((rand() % (ctLayers-1)) + 1); //select a random layer
         //Also give the chance that no layer is mutated (By excluding the first and last layer)
         if(layerSpecifier == 0) return; //Don't mutate the input layer
 
@@ -223,17 +223,16 @@ public:
         }
     }
     
-    void exportNetwork(std::string fileName) //Export the network to a file (For later use) and for analysis
+    void exportNetwork(std::string fileName, bool humanReadable = false) //Export the network to a file (For later use) and for analysis
     {
         std::ofstream file;
         file.open(fileName);
         Layer *currentLayer = firstLayer;
         uint16_t layerNum = 0;
-        file << "Cost: " << cost << "\n";
         while(currentLayer != nullptr)
         {
             file << "Layer" << layerNum << ": " << currentLayer->ctNeurons << "\n";
-            currentLayer->exportToFile(file);
+            currentLayer->exportToFile(file, humanReadable);
             currentLayer = currentLayer->nextLayer;
             layerNum++;
         }
@@ -244,9 +243,9 @@ public:
 
     void getConnections(std::string str, Layer *currentLayer)
     {
-        uint32_t globalStart = 0;
-        uint32_t connectionIndex = 0;
-        uint32_t neuronIndex = 0;
+        std::size_t globalStart = 0;
+        uint16_t connectionIndex = 0;
+        uint16_t neuronIndex = 0;
         Neuron *currentNeuron = currentLayer->neurons;
         if(currentLayer->prevLayer == nullptr) //If the current layer is the input layer
         {
@@ -255,9 +254,9 @@ public:
 
         while(str.find(",", globalStart) < str.length()) //While there are still connections to be found
         {
-            uint32_t start = str.find(", ", globalStart) + 2; //Get the start of the connection
-            uint32_t end = str.find(", ", start); //Get the end of the connection
-            uint32_t newline = str.find("\n", start); //Get the end of the line
+            std::size_t start = str.find(", ", globalStart) + 2; //Get the start of the connection
+            std::size_t end = str.find(", ", start); //Get the end of the connection
+            std::size_t newline = str.find("\n", start); //Get the end of the line
             if(start < globalStart) 
             {
                 break;
@@ -305,7 +304,7 @@ public:
         std::string layerNum = str.substr(layerIndex + 5, str.find(":", layerIndex+5) - layerIndex - 5);
         std::string ctNeurons = str.substr(str.find(":",layerIndex) + 2, str.find("\n", layerIndex) - str.find(":", layerIndex) - 2);
         layerIndex = str.find("\n", layerIndex+1);
-        Layer *newLayer = addLayer(std::stoi(ctNeurons), NONE);
+        Layer *newLayer = addLayer(uint16_t(std::stoi(ctNeurons)), NONE);
         for(uint16_t i = 0; i < newLayer->ctNeurons; i++)
         {
             std::string actString = str.substr(str.find("\n",layerIndex) + 1, str.find(",",layerIndex) - str.find("\n",layerIndex) - 1);
