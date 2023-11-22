@@ -40,12 +40,7 @@ public:
     #endif
     void feedThrough()
     {
-        if(weight == 0.0)
-            return;
-        if(inputVal != nullptr && outputVal != nullptr && fromNeuron != nullptr && toNeuron != nullptr)
-            *outputVal += *inputVal * weight;
-        else
-            weight = 0;
+        *outputVal += *inputVal * weight;
     }
     #ifdef useGPU
     void* operator new(size_t size)
