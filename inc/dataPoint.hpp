@@ -1,8 +1,9 @@
 #pragma once
+#include "neuronTypes.hpp"
 
 class dataPoint
 {
 public:
-    double *inputs;
-    double *expectedOutputs;
+    in_out_t *inputs;
+    in_out_t *expectedOutputs;
 };

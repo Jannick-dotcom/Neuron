@@ -2,6 +2,8 @@
 #include <iostream>
 #include <random>
 
+#include "neuronTypes.hpp"
+
 dataPoint points;
 
 #include <fstream>
@@ -10,21 +12,21 @@ std::ofstream file;
 
 void doLearning(Network *net)
 {
-    double possibleCombinations[100][2];
-    for(uint16_t i = 0; i < sizeof(possibleCombinations) / sizeof(possibleCombinations[0]); i++)
+    in_out_t possibleCombinations[100][2];
+    for(count_t i = 0; i < sizeof(possibleCombinations) / sizeof(possibleCombinations[0]); i++)
     {
         possibleCombinations[i][0] = (rand() % 100) / 100.0;
         possibleCombinations[i][1] = (rand() % 100) / 100.0;
     }
-    points.inputs = new double[net->firstLayer->ctNeurons];
-    points.expectedOutputs = new double[net->outputLayer->ctNeurons];
-    double learningRate = 0.0001;
-    double lastCost = 0;
+    points.inputs = new in_out_t[net->firstLayer->ctNeurons];
+    points.expectedOutputs = new in_out_t[net->outputLayer->ctNeurons];
+    weight_t learningRate = 0.0001;
+    weight_t lastCost = 0;
     do
     {
         lastCost = net->cost;
         net->cost = 0;
-        for (uint16_t i = 0; i < sizeof(possibleCombinations) / sizeof(possibleCombinations[0]); i++)
+        for (count_t i = 0; i < sizeof(possibleCombinations) / sizeof(possibleCombinations[0]); i++)
         {
             points.inputs[0] = possibleCombinations[i][0];
             points.inputs[1] = possibleCombinations[i][1];
@@ -42,14 +44,14 @@ void doLearning(Network *net)
     delete[] points.expectedOutputs;
 }
 
-Network *generateMutatedNets(Network *net, uint16_t countAgents)
+Network *generateMutatedNets(Network *net, count_t countAgents)
 {
     Network *agents = new Network[countAgents];
     //////////////////////////////////////////////////
     //TODO: Improve copying of networks!!
     //////////////////////////////////////////////////
     net->exportNetwork("transfer.txt");
-    for(uint16_t i = 0; i < countAgents; i++)
+    for(count_t i = 0; i < countAgents; i++)
     {
         agents[i].importNetwork("transfer.txt");
         agents[i].costType = net->costType;
@@ -59,13 +61,13 @@ Network *generateMutatedNets(Network *net, uint16_t countAgents)
     return agents;
 }
 
-void doMutating(Network *net, uint16_t countAgents, uint16_t countGenerations)
+void doMutating(Network *net, count_t countAgents, count_t countGenerations)
 {
-    uint16_t bestNet = 0;
+    count_t bestNet = 0;
     Network *agents = generateMutatedNets(net, countAgents);
-    for(uint16_t i = 0; i < countGenerations; i++)
+    for(count_t i = 0; i < countGenerations; i++)
     {
-        for(uint16_t agent = 0; agent < countAgents; agent++)
+        for(count_t agent = 0; agent < countAgents; agent++)
         {
             //////////////////////////////////////////////////
             //TODO: Do Task and save Result!!
