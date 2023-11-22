@@ -64,5 +64,9 @@ public:
     {
         cudaFree(ptr);
     }
+    void operator delete[](void* ptr)
+    {
+        cudaFree(ptr);
+    }
     #endif
 };

@@ -94,7 +94,10 @@ public:
     void operator delete(void * p)
     {
         cudaFree(p);
-        free(p);
+    }
+    void operator delete[](void* ptr)
+    {
+        cudaFree(ptr);
     }
     #endif
 };
