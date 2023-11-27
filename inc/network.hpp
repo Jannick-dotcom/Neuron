@@ -12,8 +12,8 @@ class Network
 public:
     Layer *firstLayer;
     Layer *outputLayer;
-    uint16_t ctLayers;
-    double cost;
+    count_t ctLayers;
+    in_out_t cost;
     CostFunctionType costType;
     Network(CostFunctionType costType = CostFunctionType::CostQUADRATIC)
     {
@@ -34,7 +34,7 @@ public:
         }
     }
 
-    Layer *addLayer(uint16_t ctNeurons, ActivationFunctionType activationFunction)
+    Layer *addLayer(count_t ctNeurons, ActivationFunctionType activationFunction)
     {
         if(firstLayer == nullptr || ctLayers == 0)
         {
@@ -64,7 +64,7 @@ public:
             return;
         }
 
-        for(uint16_t i = 0; i < firstLayer->ctNeurons; i++)
+        for(count_t i = 0; i < firstLayer->ctNeurons; i++)
         {
             firstLayer->neurons[i].inputVal = data.inputs[i];
         }
@@ -92,7 +92,7 @@ public:
         Layer *currentLayer = firstLayer;
         while(currentLayer != nullptr)
         {
-            for(uint16_t i = 0; i < currentLayer->ctNeurons; i++)
+            for(count_t i = 0; i < currentLayer->ctNeurons; i++)
             {
                 currentLayer->neurons[i].gradientW = 0;
             }
@@ -102,42 +102,42 @@ public:
     #ifdef useGPU
     __device__ 
     #endif
-    double nodeCost(double output, double target)
+    in_out_t nodeCost(in_out_t output, in_out_t target)
     {
         return costFunction(costType, output, target);
     }
     #ifdef useGPU
     __device__ 
     #endif
-    double dcost_dout(double expected, double actual)
+    in_out_t dcost_dout(in_out_t expected, in_out_t actual)
     {
         return costFunctionDerivative(costType ,actual, expected);
     }
     #ifdef useGPU
     __device__ 
     #endif
-    double dOut_dWin(Neuron &n, double w_in)
+    in_out_t dOut_dWin(Neuron &n, weight_t w_in)
     {
         return activationFunctionDerivative(n.type, w_in);
     }
     #ifdef useGPU
     __device__ 
     #endif
-    double dWin_dW(double input)
+    in_out_t dWin_dW(weight_t input)
     {
         return input;
     }
     #ifdef useGPU
     __device__ 
     #endif
-    double dWin_dB()
+    weight_t dWin_dB()
     {
         return 1;
     }
     #ifdef useGPU
     __device__ 
     #endif
-    double dWin_dIn(double weight)
+    weight_t dWin_dIn(weight_t weight)
     {
         return weight;
     }
@@ -145,16 +145,16 @@ public:
     #ifdef useGPU
     __device__ 
     #endif
-    void updateWeightsAndBiases(double learnRate, double momentumFactor)
+    void updateWeightsAndBiases(weight_t learnRate, weight_t momentumFactor)
     {
         Layer *currentLayer = firstLayer->nextLayer;
         while(currentLayer != nullptr)
         {
-            for(uint16_t i = 0; i < currentLayer->ctNeurons; i++)
+            for(count_t i = 0; i < currentLayer->ctNeurons; i++)
             {
-                for(uint16_t j = 0; j < currentLayer->neurons[i].ctConnectionsIn; j++)
+                for(count_t j = 0; j < currentLayer->neurons[i].ctConnectionsIn; j++)
                 {
-                    double weightChange = learnRate * currentLayer->neurons[i].gradientW * dWin_dW(*currentLayer->neurons[i].connectionsIn[j].inputVal);
+                    weight_t weightChange = learnRate * currentLayer->neurons[i].gradientW * dWin_dW(*currentLayer->neurons[i].connectionsIn[j].inputVal);
                     currentLayer->neurons[i].connectionsIn[j].weight -= weightChange + (currentLayer->neurons[i].connectionsIn[j].prevWeightChange * momentumFactor);
                     currentLayer->neurons[i].connectionsIn[j].prevWeightChange += weightChange;
                 }
@@ -171,14 +171,14 @@ public:
         if(layerSpecifier == 0) return; //Don't mutate the input layer
 
         Layer *currentLayer = firstLayer; //Get the first layer
-        for(uint16_t i = 0; i < layerSpecifier; i++) 
+        for(count_t i = 0; i < layerSpecifier; i++) 
             currentLayer = currentLayer->nextLayer; //Get the specified random layer
         currentLayer->mutate(mutationRate); //Mutate the specified layer
     }
     #ifdef useGPU
     __device__ 
     #endif
-    void learn(double *expected) //Improve the network based on the defined cost function and expected outputs
+    void learn(in_out_t *expected) //Improve the network based on the defined cost function and expected outputs
     {
         Layer *currentLayer = firstLayer;
         while(currentLayer->nextLayer != nullptr) currentLayer = currentLayer->nextLayer; //Get last layer
@@ -186,10 +186,10 @@ public:
 
         while(currentLayer->prevLayer != nullptr)
         {
-            for(uint16_t i = 0; i < currentLayer->ctNeurons; i++)
+            for(count_t i = 0; i < currentLayer->ctNeurons; i++)
             {
-                double output = currentLayer->neurons[i].outputVal;
-                double w_in = currentLayer->neurons[i].inputVal;
+                auto output = currentLayer->neurons[i].outputVal;
+                auto w_in = currentLayer->neurons[i].inputVal;
 
                 if(currentLayer->nextLayer == nullptr)
                 {
@@ -197,9 +197,9 @@ public:
                     currentLayer->neurons[i].gradientW = dcost_dout(expected[i], output) * dOut_dWin(currentLayer->neurons[i], w_in);
                 }
                 
-                for(uint16_t con = 0; con < currentLayer->neurons[i].ctConnectionsIn; con++)
+                for(count_t con = 0; con < currentLayer->neurons[i].ctConnectionsIn; con++)
                 {
-                    double weight = currentLayer->neurons[i].connectionsIn[con].weight;
+                    auto weight = currentLayer->neurons[i].connectionsIn[con].weight;
                     currentLayer->neurons[i].connectionsIn[con].fromNeuron->gradientW += currentLayer->neurons[i].gradientW * dWin_dIn(weight) * dOut_dWin(currentLayer->neurons[i], w_in);
                 }
             }
@@ -210,7 +210,7 @@ public:
     void print() //Show the network in the console
     {
         Layer *currentLayer = firstLayer;
-        uint16_t layerNum = 0;
+        count_t layerNum = 0;
         while(currentLayer != nullptr)
         {
             std::cout << "Layer " << layerNum << "\n";
@@ -225,7 +225,7 @@ public:
         std::ofstream file;
         file.open(fileName);
         Layer *currentLayer = firstLayer;
-        uint16_t layerNum = 0;
+        count_t layerNum = 0;
         while(currentLayer != nullptr)
         {
             file << "Layer" << layerNum << ": " << currentLayer->ctNeurons << "\n";
@@ -241,8 +241,8 @@ public:
     void getConnections(std::string str, Layer *currentLayer)
     {
         std::size_t globalStart = 0;
-        uint16_t connectionIndex = 0;
-        uint16_t neuronIndex = 0;
+        count_t connectionIndex = 0;
+        count_t neuronIndex = 0;
         Neuron *currentNeuron = currentLayer->neurons;
         if(currentLayer->prevLayer == nullptr) //If the current layer is the input layer
         {
@@ -266,11 +266,10 @@ public:
             if(start != (uint32_t)-1 && end != (uint32_t)-1) //If the connection is valid
             {
                 std::string weight = str.substr(start, end - start); //Get the weight of the connection
-                // double weightVal = std::stod(weight); //Convert the weight to a double
                 uint64_t weightValInt = std::stoul(weight);
-                double weightValDouble;
-                std::memcpy(&weightValDouble, &weightValInt, sizeof(double));
-                currentNeuron->connectionsIn[connectionIndex].weight = weightValDouble;
+                weight_t weightValfloat;
+                std::memcpy(&weightValfloat, &weightValInt, sizeof(weight_t));
+                currentNeuron->connectionsIn[connectionIndex].weight = weightValfloat;
                 connectionIndex++;
                 globalStart = end;
                 if(connectionIndex == currentNeuron->ctConnectionsIn) //If the current neuron has no more connections
@@ -301,8 +300,8 @@ public:
         std::string layerNum = str.substr(layerIndex + 5, str.find(":", layerIndex+5) - layerIndex - 5);
         std::string ctNeurons = str.substr(str.find(":",layerIndex) + 2, str.find("\n", layerIndex) - str.find(":", layerIndex) - 2);
         layerIndex = str.find("\n", layerIndex+1);
-        Layer *newLayer = addLayer(uint16_t(std::stoi(ctNeurons)), NONE);
-        for(uint16_t i = 0; i < newLayer->ctNeurons; i++)
+        Layer *newLayer = addLayer(count_t(std::stoi(ctNeurons)), NONE);
+        for(count_t i = 0; i < newLayer->ctNeurons; i++)
         {
             std::string actString = str.substr(str.find("\n",layerIndex) + 1, str.find(",",layerIndex) - str.find("\n",layerIndex) - 1);
             ActivationFunctionType activationFunction = (ActivationFunctionType)std::stoi(actString); ////////////////Kacke !!!!!!!!!!!!!!!!!!!

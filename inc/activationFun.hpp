@@ -2,6 +2,7 @@
 
 #include <string>
 #include <cmath>
+#include "neuronTypes.hpp"
 
 typedef enum {
     LINEAR,
@@ -15,7 +16,7 @@ typedef enum {
 #ifdef useGPU
 __device__ 
 #endif
-double activationFunction(ActivationFunctionType type, double input)
+in_out_t activationFunction(ActivationFunctionType type, in_out_t input)
 {
     switch (type)
     {
@@ -43,7 +44,7 @@ double activationFunction(ActivationFunctionType type, double input)
 #ifdef useGPU
 __device__ 
 #endif
-double activationFunctionDerivative(ActivationFunctionType type, double input)
+in_out_t activationFunctionDerivative(ActivationFunctionType type, in_out_t input)
 {
     switch (type)
     {

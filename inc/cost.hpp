@@ -1,5 +1,6 @@
 #pragma once
 #include <cmath>
+#include "neuronTypes.hpp"
 
 typedef enum {
     CostQUADRATIC,
@@ -7,7 +8,7 @@ typedef enum {
     CostNONE
 } CostFunctionType;
 
-double costFunction(CostFunctionType type, double output, double target)
+float costFunction(CostFunctionType type, in_out_t output, in_out_t target)
 {
     switch (type)
     {
@@ -23,7 +24,7 @@ double costFunction(CostFunctionType type, double output, double target)
     }
 }
 
-double costFunctionDerivative(CostFunctionType type, double output, double target)
+float costFunctionDerivative(CostFunctionType type, in_out_t output, in_out_t target)
 {
     switch (type)
     {

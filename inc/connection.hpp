@@ -1,14 +1,14 @@
 #pragma once
-
+#include "neuronTypes.hpp"
 class Neuron;
 
 class connection
 {
 public:
-    double weight;
-    double prevWeightChange;
-    double *inputVal;
-    double *outputVal;
+    weight_t weight;
+    weight_t prevWeightChange;
+    in_out_t *inputVal;
+    in_out_t *outputVal;
     Neuron *fromNeuron;
     Neuron *toNeuron;
     connection()
@@ -19,7 +19,7 @@ public:
         this->toNeuron = nullptr;
         this->weight = 1.0;
     }
-    connection(double *in, double *out, double weight)
+    connection(in_out_t *in, in_out_t *out, weight_t weight)
     {
         this->inputVal = in;
         this->outputVal = out;
@@ -40,12 +40,7 @@ public:
     #endif
     void feedThrough()
     {
-        if(weight == 0.0)
-            return;
-        if(inputVal != nullptr && outputVal != nullptr && fromNeuron != nullptr && toNeuron != nullptr)
-            *outputVal += *inputVal * weight;
-        else
-            weight = 0;
+        *outputVal += *inputVal * weight;
     }
     #ifdef useGPU
     void* operator new(size_t size)
