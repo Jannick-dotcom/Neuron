@@ -164,9 +164,6 @@ public:
         clearGradients();
     }
 
-    #ifdef useGPU
-    __device__ 
-    #endif
     void mutate(double mutationRate) //Mutate the network by a certain rate
     {
         uint8_t layerSpecifier = uint8_t((rand() % (ctLayers-1)) + 1); //select a random layer
