@@ -37,7 +37,7 @@ public:
             if (prevLayer != nullptr) // hidden or output layer
             {
                 neurons[i].connectionsIn = new connection[prevLayer->ctNeurons + 1]; // connections from previous layer to this layer
-                neurons[i].ctConnectionsIn = prevLayer->ctNeurons+1;                   // count of connections from previous layer to this layer
+                neurons[i].ctConnectionsIn = prevLayer->ctNeurons + (count_t)1; // count of connections from previous layer to this layer
             }
             else // input layer
             {
@@ -51,7 +51,7 @@ public:
             {
                 neurons[i].connectionsIn[neurPrevLayer].inputVal = &prevLayer->neurons[neurPrevLayer].outputVal; // set start of connection to previous layer's neuron
                 neurons[i].connectionsIn[neurPrevLayer].outputVal = &neurons[i].inputVal;                        // set end of connection to current layer's neuron
-                neurons[i].connectionsIn[neurPrevLayer].weight = rand() / weight_t(RAND_MAX) - 0.5;                // set weight of connection to random value between -0.5 and 0.5
+                neurons[i].connectionsIn[neurPrevLayer].weight = (weight_t)rand() / weight_t(RAND_MAX) - (weight_t)0.5;                // set weight of connection to random value between -0.5 and 0.5
                 neurons[i].connectionsIn[neurPrevLayer].fromNeuron = &prevLayer->neurons[neurPrevLayer];
                 neurons[i].connectionsIn[neurPrevLayer].toNeuron = &neurons[i];
             }
@@ -76,7 +76,7 @@ public:
                 throw std::system_error();
                 exit(1);
             }
-            newNeurons[i].ctConnectionsIn = prevLayer->ctNeurons + 1;
+            newNeurons[i].ctConnectionsIn = prevLayer->ctNeurons + (count_t)1;
             newNeurons[i].connectionsIn = new connection[newNeurons[i].ctConnectionsIn];
             for(count_t j = 0; j < newNeurons[i].ctConnectionsIn; j++) // define connections of new neurons
             {
@@ -85,7 +85,7 @@ public:
                 tempCurrCon->toNeuron = &(newNeurons[i]);
                 tempCurrCon->inputVal = &(tempCurrCon->fromNeuron->outputVal);
                 tempCurrCon->outputVal = &(tempCurrCon->toNeuron->inputVal);
-                tempCurrCon->weight = rand() / weight_t(RAND_MAX) - 0.5;
+                tempCurrCon->weight = (weight_t)rand() / weight_t(RAND_MAX) - (weight_t)0.5;
             }
         }
         //////////////Copy not change neurons///////////////////////////////////////////////////////////////////
@@ -124,7 +124,7 @@ public:
                     newCon[j].toNeuron = &(nextLayer->neurons[i]);
                     newCon[j].inputVal = &(neurons[j].outputVal);
                     newCon[j].outputVal = &(nextLayer->neurons[i].inputVal);
-                    newCon[j].weight = rand() / weight_t(RAND_MAX) - 0.5;
+                    newCon[j].weight = (weight_t)rand() / weight_t(RAND_MAX) - (weight_t)0.5;
                     newCon[j].prevWeightChange = 0;
                 }
                 else //Already present connections
@@ -139,7 +139,7 @@ public:
             }
             delete[] nextLayer->neurons[i].connectionsIn;
             nextLayer->neurons[i].connectionsIn = newCon;
-            nextLayer->neurons[i].ctConnectionsIn = ctNeurons + 1;
+            nextLayer->neurons[i].ctConnectionsIn = count_t(ctNeurons + 1);
         }
     }
     void removeNeuron(count_t index)
@@ -184,18 +184,18 @@ public:
             for(count_t j = 0; j < nextLayer->neurons[i].ctConnectionsIn; j++)
             {
                 if(j == index) continue;
-                newCon[newconindex] = nextLayer->neurons[i].connectionsIn[j];
+                newCon[newconindex] = connection(nextLayer->neurons[i].connectionsIn[j]);
                 newCon[newconindex].fromNeuron = &(neurons[newconindex]);
                 newCon[newconindex].inputVal = &(neurons[newconindex].outputVal);
                 newconindex++;
             }
             delete[] nextLayer->neurons[i].connectionsIn;
             nextLayer->neurons[i].connectionsIn = newCon;
-            nextLayer->neurons[i].ctConnectionsIn = ctNeurons +1;
+            nextLayer->neurons[i].ctConnectionsIn = ctNeurons + count_t(1);
         }
     }
 
-    void mutate(float mutationRate)
+    void mutate(weight_t mutationRate)
     {
         //to leave the chance that the layer does not mutate at all, we do modulo n+1
         uint8_t mutationSpecifier; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
@@ -225,7 +225,7 @@ public:
                     return;
                 }
                 count_t connectionSpecifier = count_t(rand() % neurons[neuronSpecifier].ctConnectionsIn);
-                weight_t weightchange = (rand() / weight_t(RAND_MAX) - 0.5) * mutationRate;
+                weight_t weightchange = ((weight_t)rand() / (weight_t)RAND_MAX - (weight_t)0.5) * mutationRate;
                 auto *weight = &neurons[neuronSpecifier].connectionsIn[connectionSpecifier].weight;
                 *weight += weightchange;
                 break;

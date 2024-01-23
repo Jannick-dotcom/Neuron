@@ -18,12 +18,6 @@ public:
         this->fromNeuron = nullptr;
         this->toNeuron = nullptr;
         this->weight = 1.0;
-    }
-    connection(in_out_t *in, in_out_t *out, weight_t weight)
-    {
-        this->inputVal = in;
-        this->outputVal = out;
-        this->weight = weight;
         this->prevWeightChange = 0;
     }
     connection(const connection &conn)
@@ -41,6 +35,16 @@ public:
     void feedThrough()
     {
         *outputVal += *inputVal * weight;
+    }
+    connection &operator=(const connection second)
+    {
+        this->fromNeuron = second.fromNeuron;
+        this->toNeuron = second.toNeuron;
+        this->inputVal = second.inputVal;
+        this->outputVal = second.outputVal;
+        this->weight = second.weight;
+        this->prevWeightChange = second.prevWeightChange;
+        return *this;
     }
     #ifdef useGPU
     void* operator new(size_t size)

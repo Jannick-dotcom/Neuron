@@ -8,15 +8,15 @@ typedef enum {
     CostNONE
 } CostFunctionType;
 
-float costFunction(CostFunctionType type, in_out_t output, in_out_t target)
+in_out_t costFunction(CostFunctionType type, in_out_t output, in_out_t target)
 {
     switch (type)
     {
     case CostQUADRATIC:
-        return 0.5 * pow(output - target, 2);
+        return (in_out_t)(0.5 * pow(output - target, 2));
         break;
     case CostEXPONENTIAL:
-        return exp(-pow(output - target, 2));
+        return (in_out_t)exp(-pow(output - target, 2));
         break;
     default:
         return 0;
@@ -24,7 +24,7 @@ float costFunction(CostFunctionType type, in_out_t output, in_out_t target)
     }
 }
 
-float costFunctionDerivative(CostFunctionType type, in_out_t output, in_out_t target)
+in_out_t costFunctionDerivative(CostFunctionType type, in_out_t output, in_out_t target)
 {
     switch (type)
     {
@@ -32,7 +32,7 @@ float costFunctionDerivative(CostFunctionType type, in_out_t output, in_out_t ta
         return output - target;
         break;
     case CostEXPONENTIAL:
-        return -2 * (output - target) * exp(-pow(output - target, 2));
+        return -2 * (output - target) * (in_out_t)exp(-pow(output - target, 2));
         break;
     default:
         return 0;
