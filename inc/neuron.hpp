@@ -23,17 +23,28 @@ public:
         if(connectionsIn != nullptr)
         {
             inputVal = 0.0;
-            for (count_t i = 0; i < ctConnectionsIn; i++)
+            #ifdef useGPU
+            connectionsIn[blockIdx.x].feedThrough();
+            #else
+            for (uint16_t i = 0; i < ctConnectionsIn; i++)
             {
                 connectionsIn[i].feedThrough();
             }
+            #endif
         }
     }
+    
     #ifdef useGPU
     __device__ 
     #endif
     void activation(in_out_t inputVal)
     {
+        #ifdef useGPU
+        if(blockIdx.x != 0)
+        {
+            return;
+        }
+        #endif
         outputVal = activationFunction(type, inputVal);
     }
     Neuron()
@@ -95,7 +106,10 @@ public:
     void operator delete(void * p)
     {
         cudaFree(p);
-        free(p);
+    }
+    void operator delete[](void* ptr)
+    {
+        cudaFree(ptr);
     }
     #endif
 };

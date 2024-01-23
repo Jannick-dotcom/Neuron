@@ -242,14 +242,20 @@ public:
         }
     }
     #ifdef useGPU
-    __global__ friend void feedThroughGpu(Layer *layer);
+    __global__ friend void LayerFeedThroughGpu(Layer *layer);
     #endif
 
     void feedThrough()
     {
         #ifdef useGPU
-        dim3 threadsPerBlock(ctNeurons+1, 1);
-        feedThroughGpu<<<1,threadsPerBlock>>>(this);
+        if(prevLayer == nullptr)
+        {
+            LayerFeedThroughGpu<<<1, ctNeurons+1>>>(this);
+        }
+        else
+        {
+            LayerFeedThroughGpu<<<prevLayer->ctNeurons+1, ctNeurons+1>>>(this);
+        }
         cudaDeviceSynchronize();
         #else
         for (count_t i = 0; i < ctNeurons+1; i++)
@@ -311,6 +317,10 @@ public:
         return temp;
     }
     void operator delete(void* ptr)
+    {
+        cudaFree(ptr);
+    }
+    void operator delete[](void* ptr)
     {
         cudaFree(ptr);
     }

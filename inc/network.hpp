@@ -164,10 +164,7 @@ public:
         clearGradients();
     }
 
-    #ifdef useGPU
-    __device__ 
-    #endif
-    void mutate(weight_t mutationRate) //Mutate the network by a certain rate
+    void mutate(double mutationRate) //Mutate the network by a certain rate
     {
         uint8_t layerSpecifier = uint8_t((rand() % (ctLayers-1)) + 1); //select a random layer
         //Also give the chance that no layer is mutated (By excluding the first and last layer)
@@ -358,6 +355,10 @@ public:
         return temp;
     }
     void operator delete(void* ptr)
+    {
+        cudaFree(ptr);
+    }
+    void operator delete[](void* ptr)
     {
         cudaFree(ptr);
     }
