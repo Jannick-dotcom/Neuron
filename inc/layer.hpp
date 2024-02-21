@@ -37,7 +37,7 @@ public:
             if (prevLayer != nullptr) // hidden or output layer
             {
                 neurons[i].connectionsIn = new connection[prevLayer->ctNeurons + 1]; // connections from previous layer to this layer
-                neurons[i].ctConnectionsIn = prevLayer->ctNeurons + (count_t)1; // count of connections from previous layer to this layer
+                neurons[i].ctConnectionsIn = count_t(prevLayer->ctNeurons + (count_t)1U); // count of connections from previous layer to this layer
             }
             else // input layer
             {
@@ -76,7 +76,7 @@ public:
                 throw std::system_error();
                 exit(1);
             }
-            newNeurons[i].ctConnectionsIn = prevLayer->ctNeurons + (count_t)1;
+            newNeurons[i].ctConnectionsIn = count_t(prevLayer->ctNeurons + (count_t)1U);
             newNeurons[i].connectionsIn = new connection[newNeurons[i].ctConnectionsIn];
             for(count_t j = 0; j < newNeurons[i].ctConnectionsIn; j++) // define connections of new neurons
             {
@@ -191,7 +191,7 @@ public:
             }
             delete[] nextLayer->neurons[i].connectionsIn;
             nextLayer->neurons[i].connectionsIn = newCon;
-            nextLayer->neurons[i].ctConnectionsIn = ctNeurons + count_t(1);
+            nextLayer->neurons[i].ctConnectionsIn = count_t(ctNeurons + count_t(1));
         }
     }
 
