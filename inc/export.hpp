@@ -2,6 +2,7 @@
 #include <fstream>
 std::ofstream file;
 std::string tab = "\t";
+extern std::string fileOutputPath;
 
 void exportConnections(count_t layerIndex, Layer *runningLayer)
 {
@@ -41,7 +42,7 @@ void exportNeurons(count_t layerIndex, Layer *runningLayer)
 }
 
 
-std::string generateInitConnections(count_t layerIndex, Layer *runningLayer)
+std::string generateInitConnections(count_t layerIndex)
 {
     std::stringstream temp;
     temp << tab << tab << "for(count_t c = 0; c < n" << layerIndex << "[n].ctConnectionsIn; c++) {\n";
@@ -71,7 +72,7 @@ std::string generateInitMethod(count_t layerIndex, Layer *runningLayer)
     temp << "\t\tn" << layerIndex << "[n].ctConnectionsIn = " << (layerIndex > 0 ? runningLayer->prevLayer->ctNeurons+1 : 0) << ";\n";
     if(layerIndex > 0)
     {
-        temp << generateInitConnections(layerIndex, runningLayer);
+        temp << generateInitConnections(layerIndex);
         temp << "\t\tn" << layerIndex << "[n].connectionsIn = c" << layerIndex << "[n];\n";
     }
 
@@ -87,7 +88,7 @@ std::string generateInitMethod(count_t layerIndex, Layer *runningLayer)
 
 void exportNetworkToCpp(Network &net)
 {
-    file.open("output.cpp");
+    file.open(fileOutputPath + "output.cpp");
     Layer *runningLayer = net.firstLayer;
     count_t layerIndex = 0;
     
