@@ -29,7 +29,7 @@ public:
         while(currentLayer != nullptr)
         {
             Layer *nextLayer = currentLayer->nextLayer;
-            delete currentLayer;
+            if(currentLayer->heapAllocatedNeurons) delete currentLayer;
             currentLayer = nextLayer;
         }
     }
