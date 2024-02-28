@@ -14,11 +14,20 @@ public:
     count_t ctNeurons;
     Layer *nextLayer;
     Layer *prevLayer;
-
+    bool heapAllocatedNeurons;
+    Layer()
+    {
+        neurons = nullptr;
+        ctNeurons = 0;
+        nextLayer = nullptr;
+        prevLayer = nullptr;
+        heapAllocatedNeurons = false;
+    }
     Layer(count_t ctNeurons, Layer *prevLayer, ActivationFunctionType ActivationFunction)
     {
         this->ctNeurons = ctNeurons;
         this->neurons = new Neuron[ctNeurons+1];
+        this->heapAllocatedNeurons = true;
         this->nextLayer = nullptr;
         this->prevLayer = prevLayer;
         
@@ -59,7 +68,14 @@ public:
     }
     ~Layer()
     {
-        delete[] neurons;
+        if(heapAllocatedNeurons)
+        {
+            for(count_t i = 0; i < ctNeurons; i++)
+            {
+                delete[] neurons[i].connectionsIn;
+            }
+            delete[] neurons;
+        }
     }
 
     void addNeuron(ActivationFunctionType ActivationFunction, count_t count = 1)
