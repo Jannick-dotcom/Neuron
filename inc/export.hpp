@@ -95,7 +95,7 @@ void exportNetworkToCpp(Network &net)
     file << "#include <network.hpp>\n";
     file << "Network net;\n";
     std::string initMethods;
-    std::string mainMethod = "int main(){\n";
+    std::string mainMethod = "void init(){\n";
     for(layerIndex = 0; runningLayer != nullptr; layerIndex++)
     {
         file << "\nLayer l" << layerIndex << ";\n";
