@@ -234,16 +234,15 @@ public:
             case 2: // change connection
             {
                 count_t neuronSpecifier = count_t(rand() % ctNeurons);
-                if(neurons[neuronSpecifier].ctConnectionsIn == 0) 
-                {
-                    std::cout << "Somehow selected strange Neuron: " << neuronSpecifier << "\n";
-                    throw std::system_error();
-                    return;
-                }
+                // if(neurons[neuronSpecifier].ctConnectionsIn == 0) 
+                // {
+                //     std::cout << "Somehow selected strange Neuron: " << neuronSpecifier << "\n";
+                //     throw std::system_error();
+                //     return;
+                // }
                 count_t connectionSpecifier = count_t(rand() % neurons[neuronSpecifier].ctConnectionsIn);
                 weight_t weightchange = ((weight_t)rand() / (weight_t)RAND_MAX - (weight_t)0.5) * mutationRate;
-                auto *weight = &neurons[neuronSpecifier].connectionsIn[connectionSpecifier].weight;
-                *weight += weightchange;
+                neurons[neuronSpecifier].connectionsIn[connectionSpecifier].weight += weightchange;
                 break;
             }
             case 3: //change activation function
