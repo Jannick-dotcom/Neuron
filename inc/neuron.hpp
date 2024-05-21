@@ -57,8 +57,8 @@ public:
     }
     ~Neuron()
     {
-        if(connectionsIn == nullptr) return;
-        delete[] connectionsIn;
+        // if(connectionsIn == nullptr) return;
+        // delete[] connectionsIn;
     }
 
     void setInput(in_out_t inputVal)

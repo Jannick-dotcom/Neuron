@@ -29,7 +29,7 @@ public:
         while(currentLayer != nullptr)
         {
             Layer *nextLayer = currentLayer->nextLayer;
-            delete currentLayer;
+            if(currentLayer->heapAllocatedNeurons) delete currentLayer;
             currentLayer = nextLayer;
         }
     }
@@ -173,7 +173,7 @@ public:
         Layer *currentLayer = firstLayer; //Get the first layer
         for(count_t i = 0; i < layerSpecifier; i++) 
             currentLayer = currentLayer->nextLayer; //Get the specified random layer
-        currentLayer->mutate(mutationRate); //Mutate the specified layer
+        currentLayer->mutate((weight_t)mutationRate); //Mutate the specified layer
     }
     #ifdef useGPU
     __device__ 

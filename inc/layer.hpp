@@ -14,11 +14,20 @@ public:
     count_t ctNeurons;
     Layer *nextLayer;
     Layer *prevLayer;
-
+    bool heapAllocatedNeurons;
+    Layer()
+    {
+        neurons = nullptr;
+        ctNeurons = 0;
+        nextLayer = nullptr;
+        prevLayer = nullptr;
+        heapAllocatedNeurons = false;
+    }
     Layer(count_t ctNeurons, Layer *prevLayer, ActivationFunctionType ActivationFunction)
     {
         this->ctNeurons = ctNeurons;
         this->neurons = new Neuron[ctNeurons+cBiasNeuronCt];
+        this->heapAllocatedNeurons = true;
         this->nextLayer = nullptr;
         this->prevLayer = prevLayer;
         
@@ -37,7 +46,7 @@ public:
             if (prevLayer != nullptr) // hidden or output layer
             {
                 neurons[i].connectionsIn = new connection[prevLayer->ctNeurons + cBiasNeuronCt]; // connections from previous layer to this layer
-                neurons[i].ctConnectionsIn = prevLayer->ctNeurons + cBiasNeuronCt; // count of connections from previous layer to this layer
+                neurons[i].ctConnectionsIn = (count_t)prevLayer->ctNeurons + (count_t)cBiasNeuronCt; // count of connections from previous layer to this layer
             }
             else // input layer
             {
@@ -59,7 +68,14 @@ public:
     }
     ~Layer()
     {
-        delete[] neurons;
+        if(heapAllocatedNeurons)
+        {
+            for(count_t i = 0; i < ctNeurons; i++)
+            {
+                delete[] neurons[i].connectionsIn;
+            }
+            delete[] neurons;
+        }
     }
 
     void addNeuron(ActivationFunctionType ActivationFunction, count_t count = 1)
@@ -76,7 +92,7 @@ public:
                 throw std::system_error();
                 exit(1);
             }
-            newNeurons[i].ctConnectionsIn = prevLayer->ctNeurons + cBiasNeuronCt;
+            newNeurons[i].ctConnectionsIn = (count_t)prevLayer->ctNeurons + (count_t)cBiasNeuronCt;
             newNeurons[i].connectionsIn = new connection[newNeurons[i].ctConnectionsIn];
             for(count_t j = 0; j < newNeurons[i].ctConnectionsIn; j++) // define connections of new neurons
             {
@@ -191,7 +207,7 @@ public:
             }
             delete[] nextLayer->neurons[i].connectionsIn;
             nextLayer->neurons[i].connectionsIn = newCon;
-            nextLayer->neurons[i].ctConnectionsIn = ctNeurons + cBiasNeuronCt;
+            nextLayer->neurons[i].ctConnectionsIn = (count_t)ctNeurons + cBiasNeuronCt;
         }
     }
 
@@ -218,16 +234,15 @@ public:
             case 2: // change connection
             {
                 count_t neuronSpecifier = count_t(rand() % ctNeurons);
-                if(neurons[neuronSpecifier].ctConnectionsIn == 0) 
-                {
-                    std::cout << "Somehow selected strange Neuron: " << neuronSpecifier << "\n";
-                    throw std::system_error();
-                    return;
-                }
+                // if(neurons[neuronSpecifier].ctConnectionsIn == 0) 
+                // {
+                //     std::cout << "Somehow selected strange Neuron: " << neuronSpecifier << "\n";
+                //     throw std::system_error();
+                //     return;
+                // }
                 count_t connectionSpecifier = count_t(rand() % neurons[neuronSpecifier].ctConnectionsIn);
                 weight_t weightchange = ((weight_t)rand() / (weight_t)RAND_MAX - (weight_t)0.5) * mutationRate;
-                auto *weight = &neurons[neuronSpecifier].connectionsIn[connectionSpecifier].weight;
-                *weight += weightchange;
+                neurons[neuronSpecifier].connectionsIn[connectionSpecifier].weight += weightchange;
                 break;
             }
             case 3: //change activation function
