@@ -269,7 +269,7 @@ public:
         }
         else
         {
-            LayerFeedThroughGpu<<<prevLayer->ctNeurons+cBiasNeuronCt, ctNeurons+cBiasNeuronCt>>>(this);
+            LayerFeedThroughGpu<<<1, ctNeurons+cBiasNeuronCt>>>(this);
         }
         cudaDeviceSynchronize();
         #else
