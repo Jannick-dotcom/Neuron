@@ -1,4 +1,5 @@
 #include "network.hpp"
+#include "networkV2.hpp"
 #include <iostream>
 #include <random>
 
@@ -87,16 +88,38 @@ void doMutating(Network *net, uint16_t countAgents, uint16_t countGenerations)
     delete[] agents;
 }
 
+void test()
+{
+    double inputs[2];
+    for(int i = 0; i < 10000; i++)
+    {
+        inputs[0] = i % 20;
+        inputs[1] = i;
+        NetworkV2 *net = new NetworkV2();
+        net->addLayer(2);
+        net->addLayer(20);
+        net->addLayer(5);
+        net->addLayer(1);
+        net->feedThrough(inputs);
+        double cost = costFunction(CostFunctionType::CostQUADRATIC, net->lastLayer->activations[0], 0.2);
+        printf("%lf\n", cost);
+        delete net;
+    }
+}
+
 int main()
 {
+    test();
+    return 0;
     Network *net = new Network(CostQUADRATIC);
     // net->importNetwork("network.txt");
     net->addLayer(2, LINEAR);
-    net->addLayer(150, RELU);
-    net->addLayer(100, RELU);
+    net->addLayer(20, RELU);
+    net->addLayer(5, RELU);
     net->addLayer(1, LINEAR);
     net->cost = 100;
     doMutating(net, 100, 50);
+    // doLearning(net);
     delete net;
     return 0;
 }
