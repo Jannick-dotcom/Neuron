@@ -4,15 +4,16 @@
 #include <iostream>
 #include "connection.hpp"
 #include "activationFun.hpp"
+#include "neuronTypes.hpp"
 
 class Neuron
 {
 public:
-    double inputVal;
-    double outputVal;
-    double gradientW;
+    in_out_t inputVal;
+    in_out_t outputVal;
+    weight_t gradientW;
     connection *connectionsIn;
-    u_int32_t ctConnectionsIn;
+    count_t ctConnectionsIn;
     ActivationFunctionType type;
     #ifdef useGPU
     __device__ 
@@ -22,17 +23,28 @@ public:
         if(connectionsIn != nullptr)
         {
             inputVal = 0.0;
+            #ifdef useGPU
+            connectionsIn[blockIdx.x].feedThrough();
+            #else
             for (uint16_t i = 0; i < ctConnectionsIn; i++)
             {
                 connectionsIn[i].feedThrough();
             }
+            #endif
         }
     }
+    
     #ifdef useGPU
     __device__ 
     #endif
-    void activation(double inputVal)
+    void activation(in_out_t inputVal)
     {
+        #ifdef useGPU
+        if(blockIdx.x != 0)
+        {
+            return;
+        }
+        #endif
         outputVal = activationFunction(type, inputVal);
     }
     Neuron()
@@ -45,15 +57,15 @@ public:
     }
     ~Neuron()
     {
-        if(connectionsIn == nullptr) return;
-        delete[] connectionsIn;
+        // if(connectionsIn == nullptr) return;
+        // delete[] connectionsIn;
     }
 
-    void setInput(double inputVal)
+    void setInput(in_out_t inputVal)
     {
         this->inputVal = inputVal;
     }
-    double getOutput()
+    in_out_t getOutput()
     {
         return outputVal;
     }
@@ -68,7 +80,7 @@ public:
     void print()
     {
         std::cout << connectionsIn << "\t";
-        for(uint16_t i = 0; i < ctConnectionsIn; i++)
+        for(count_t i = 0; i < ctConnectionsIn; i++)
         {
             std::cout << connectionsIn[i].fromNeuron << " ";
             std::cout << connectionsIn[i].toNeuron << " ";
@@ -94,7 +106,10 @@ public:
     void operator delete(void * p)
     {
         cudaFree(p);
-        free(p);
+    }
+    void operator delete[](void* ptr)
+    {
+        cudaFree(ptr);
     }
     #endif
 };

@@ -1,14 +1,14 @@
 #pragma once
-
+#include "neuronTypes.hpp"
 class Neuron;
 
 class connection
 {
 public:
-    double weight;
-    double prevWeightChange;
-    double *inputVal;
-    double *outputVal;
+    weight_t weight;
+    weight_t prevWeightChange;
+    in_out_t *inputVal;
+    in_out_t *outputVal;
     Neuron *fromNeuron;
     Neuron *toNeuron;
     connection()
@@ -18,12 +18,6 @@ public:
         this->fromNeuron = nullptr;
         this->toNeuron = nullptr;
         this->weight = 1.0;
-    }
-    connection(double *in, double *out, double weight, double bias)
-    {
-        this->inputVal = in;
-        this->outputVal = out;
-        this->weight = weight;
         this->prevWeightChange = 0;
     }
     connection(const connection &conn)
@@ -40,12 +34,17 @@ public:
     #endif
     void feedThrough()
     {
-        if(weight == 0.0)
-            return;
-        if(inputVal != nullptr && outputVal != nullptr && fromNeuron != nullptr && toNeuron != nullptr)
-            *outputVal += *inputVal * weight;
-        else
-            weight = 0;
+        *outputVal += *inputVal * weight;
+    }
+    connection &operator=(const connection second)
+    {
+        this->fromNeuron = second.fromNeuron;
+        this->toNeuron = second.toNeuron;
+        this->inputVal = second.inputVal;
+        this->outputVal = second.outputVal;
+        this->weight = second.weight;
+        this->prevWeightChange = second.prevWeightChange;
+        return *this;
     }
     #ifdef useGPU
     void* operator new(size_t size)
@@ -61,6 +60,10 @@ public:
         return p;
     }
     void operator delete(void* ptr)
+    {
+        cudaFree(ptr);
+    }
+    void operator delete[](void* ptr)
     {
         cudaFree(ptr);
     }
