@@ -282,4 +282,9 @@ public:
         }
         file.close();
     }
+
+    void mutate(double mutationRate)
+    {
+        return;
+    }
 };
