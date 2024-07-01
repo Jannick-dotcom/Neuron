@@ -92,16 +92,16 @@ void doMutating(Network *net, count_t countAgents, count_t countGenerations)
 
 void test()
 {
-    double inputs[2];
+    in_out_t inputs[2];
     for(int i = 0; i < 10000; i++)
     {
         inputs[0] = i % 20;
         inputs[1] = i;
         NetworkV2 *net = new NetworkV2();
-        net->addLayer(2);
-        net->addLayer(20);
-        net->addLayer(5);
-        net->addLayer(1);
+        net->addLayer(2, LINEAR);
+        net->addLayer(20, SIGMOID);
+        net->addLayer(5, RELU);
+        net->addLayer(1, SIGMOID);
         net->feedThrough(inputs);
         double cost = costFunction(CostFunctionType::CostQUADRATIC, net->lastLayer->activations[0], 0.2);
         printf("%lf\n", cost);
