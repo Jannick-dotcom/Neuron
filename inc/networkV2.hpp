@@ -91,7 +91,31 @@ public:
     
     void addNeuron(ActivationFunctionType type)
     {
+        weight_t **newWeights = new weight_t*[size+1];
+        weight_t *newBiases = new weight_t[size+1];
+        ActivationFunctionType *newActiFuns = new ActivationFunctionType[size+1];
+        for(count_t i = 0; i < size; i++) //iterate over every old neuron
+        {
+            newWeights[i] = weights[i];
+            newBiases[i] = biases[i];
+            newActiFuns[i] = actiFun[i];
+        }
 
+        newWeights[size] = new weight_t[prevLayerSize];
+        //TODO initialize with random weights
+
+        newBiases[size] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
+        newActiFuns[size] = type;
+
+
+        in_out_t *newActivations = new in_out_t[size]; //No need to copy these
+        delete[] weights;
+        delete[] biases;
+        delete[] actiFun;
+        weights = newWeights;
+        biases = newBiases;
+        actiFun = newActiFuns;
+        size += 1;
     }
     void removeNeuron(count_t neuronIndex)
     {
@@ -112,10 +136,10 @@ public:
         switch (mutationSpecifier)
         {
             case 0: // add neuron
-                addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
+                // addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
                 break;
             case 1: // remove neuron
-                removeNeuron(count_t(rand() % size));
+                // removeNeuron(count_t(rand() % size));
                 break;
             case 2: // change connection
             {
