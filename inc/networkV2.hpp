@@ -79,12 +79,23 @@ public:
                     file << ", " << weights[i][c];
                 }
             }
-            // if(biases != nullptr)
-            // {
-            //     file << "\tBias:" << biases[i]; //TODO: export biases
-            // }
+            if(biases != nullptr)
+            {
+                uint64_t iWeight;
+                memcpy(&iWeight, &(biases[i]), sizeof(biases[i]));
+                file << ", " << iWeight; //last weight is always a bias
+            }
             file << "\n";
         }
+    }
+    
+    void addNeuron(ActivationFunctionType type)
+    {
+
+    }
+    void removeNeuron(count_t neuronIndex)
+    {
+
     }
     void mutate(weight_t mutationRate)
     {
@@ -101,10 +112,10 @@ public:
         switch (mutationSpecifier)
         {
             case 0: // add neuron
-                // addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
+                addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
                 break;
             case 1: // remove neuron
-                // removeNeuron(count_t(rand() % size));
+                removeNeuron(count_t(rand() % size));
                 break;
             case 2: // change connection
             {
@@ -217,7 +228,6 @@ public:
     {
         std::size_t globalStart = 0;
         count_t connectionIndex = 0;
-        count_t neuronIndex = 0;
         count_t currentNeuron = 0;
         if(currentLayer == firstLayer) //If the current layer is the input layer
         {
@@ -244,16 +254,22 @@ public:
                 uint64_t weightValInt = std::stoul(weight);
                 weight_t weightValfloat;
                 std::memcpy(&weightValfloat, &weightValInt, sizeof(weight_t));
-                currentLayer->weights[currentNeuron][connectionIndex] = weightValfloat;
                 
+                if(connectionIndex == currentLayer->prevLayerSize) //If bias
+                {
+                    currentLayer->biases[currentNeuron] = weightValfloat;
+                }
+                else //if normal connection
+                {
+                    currentLayer->weights[currentNeuron][connectionIndex] = weightValfloat;
+                }
                 connectionIndex++;
                 globalStart = end;
-                if(connectionIndex == currentLayer->prevLayerSize-1) //If the current neuron has no more connections
+                if(connectionIndex == currentLayer->prevLayerSize+1)
                 {
                     connectionIndex = 0; //Reset the connection index
                     currentNeuron++;    //Move to the next neuron
-                    neuronIndex++;     //Increment the neuron index
-                    if(neuronIndex == currentLayer->size-1) //If the current layer has no more neurons
+                    if(currentNeuron == currentLayer->size) //If the current layer has no more neurons
                     {
                         break;
                     }
@@ -300,28 +316,31 @@ public:
     {
         std::ifstream file;
         file.open(fileName);
-        std::string lines;
-        std::string line;
-        
-        while(std::getline(file, line))
+        if(file.good())
         {
-            if(line.find("Cost:") != std::string::npos) continue;
-            if(line != "")
+            std::string lines;
+            std::string line;
+            
+            while(std::getline(file, line))
             {
-                lines.append(line);
-                lines.append("\n");
-            }
-            else
-            {
-                LayerV2 *newLayer = parseLayer(lines);
-                if(newLayer != nullptr)
+                if(line.find("Cost:") != std::string::npos) continue;
+                if(line != "")
                 {
-                    getConnections(lines, newLayer);
+                    lines.append(line);
+                    lines.append("\n");
                 }
-                lines = "";
+                else
+                {
+                    LayerV2 *newLayer = parseLayer(lines);
+                    if(newLayer != nullptr)
+                    {
+                        getConnections(lines, newLayer);
+                    }
+                    lines = "";
+                }
             }
+            file.close();
         }
-        file.close();
     }
 
     void mutate(double mutationRate)
