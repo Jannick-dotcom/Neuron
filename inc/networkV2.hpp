@@ -86,6 +86,45 @@ public:
             file << "\n";
         }
     }
+    void mutate(weight_t mutationRate)
+    {
+        //to leave the chance that the layer does not mutate at all, we do modulo n+1
+        uint8_t mutationSpecifier; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
+        if(next == nullptr) 
+        {
+            mutationSpecifier = 2; //if current layer is output layer, force only changing the weights
+        }
+        else
+        {
+            mutationSpecifier = uint8_t(rand() % 4); // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
+        }
+        switch (mutationSpecifier)
+        {
+            case 0: // add neuron
+                // addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
+                break;
+            case 1: // remove neuron
+                // removeNeuron(count_t(rand() % size));
+                break;
+            case 2: // change connection
+            {
+                count_t neuronSpecifier = count_t(rand() % size);
+                count_t connectionSpecifier = count_t(rand() % prevLayerSize);
+                weight_t weightchange = ((weight_t)rand() / (weight_t)RAND_MAX - (weight_t)0.5) * mutationRate;
+                weights[neuronSpecifier][connectionSpecifier] += weightchange;
+                break;
+            }
+            case 3: //change activation function
+            {
+                count_t neuronSpecifier = count_t(rand() % size);
+                ActivationFunctionType newActivationfunction = (ActivationFunctionType)(rand() % ActivationFunctionType::NONE);
+                actiFun[neuronSpecifier] = newActivationfunction;
+                break;
+            }
+            default:
+                break;
+        }
+    }
 };
 
 class NetworkV2
@@ -98,6 +137,7 @@ public:
     {
         firstLayer = nullptr;
         lastLayer = nullptr;
+        ctLayers = 0;
     }
     ~NetworkV2()
     {
@@ -111,6 +151,7 @@ public:
     }
     LayerV2 *addLayer(count_t size, ActivationFunctionType activationFunction)
     {
+        ctLayers++;
         if(firstLayer == nullptr)
         {
             firstLayer = new LayerV2(size, 0, activationFunction);
@@ -285,6 +326,13 @@ public:
 
     void mutate(double mutationRate)
     {
-        return;
+        uint8_t layerSpecifier = uint8_t((rand() % (ctLayers-1)) + 1); //select a random layer
+        //Also give the chance that no layer is mutated (By excluding the first and last layer)
+        if(layerSpecifier == 0) return; //Don't mutate the input layer
+
+        LayerV2 *currentLayer = firstLayer; //Get the first layer
+        for(count_t i = 0; i < layerSpecifier; i++) 
+            currentLayer = currentLayer->next; //Get the specified random layer
+        currentLayer->mutate((weight_t)mutationRate); //Mutate the specified layer
     }
 };
