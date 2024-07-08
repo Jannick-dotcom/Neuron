@@ -308,7 +308,6 @@ public:
     }
     LayerV2 *parseLayer(std::string str)
     {
-        //TODO: import biases
         count_t layerIndex = str.find("Layer");
         if(layerIndex == std::string::npos)
         {
