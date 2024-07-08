@@ -101,22 +101,42 @@ public:
             newBiases[i] = biases[i];
             newActiFuns[i] = actiFun[i];
         }
-
         newWeights[size] = new weight_t[prevLayerSize];
-        //TODO initialize with random weights
+
+        for(count_t conn = 0; conn < prevLayerSize; conn++)
+        {
+            newWeights[size][conn] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
+        }
 
         newBiases[size] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
         newActiFuns[size] = type;
 
+        //fix connections of next layer
+        for(count_t neuron = 0; neuron < next->size; neuron++)
+        {
+            weight_t *nextLayerNewWeights = new weight_t[size+1];
+            for(count_t conn = 0; conn < this->size; conn++)
+            {
+                nextLayerNewWeights[conn] = next->weights[neuron][conn];
+            }
+            nextLayerNewWeights[this->size] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
+            delete[] next->weights[neuron];
+            next->weights[neuron] = nextLayerNewWeights;
+        }
+        next->prevLayerSize = size+1;
+        ////////////////////////////////
 
-        in_out_t *newActivations = new in_out_t[size]; //No need to copy these
+
+        in_out_t *newActivations = new in_out_t[size+1]; //No need to copy these
         delete[] weights;
         delete[] biases;
         delete[] actiFun;
+        delete[] activations;
         weights = newWeights;
         biases = newBiases;
         actiFun = newActiFuns;
-        size += 1;
+        activations = newActivations;
+        size++;
     }
     void removeNeuron(count_t neuronIndex)
     {
@@ -137,7 +157,7 @@ public:
         switch (mutationSpecifier)
         {
             case 0: // add neuron
-                // addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
+                addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
                 break;
             case 1: // remove neuron
                 // removeNeuron(count_t(rand() % size));
