@@ -11,6 +11,7 @@ public:
     count_t prevLayerSize = 0;
     LayerV2(count_t size, count_t prevLayerSize, ActivationFunctionType activationFunction)
     {
+        biases = nullptr;
         actiFun = new ActivationFunctionType[size];
         for(count_t i = 0; i < size; i++)
         {
