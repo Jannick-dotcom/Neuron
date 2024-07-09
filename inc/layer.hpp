@@ -271,7 +271,7 @@ public:
         {
             LayerFeedThroughGpu<<<1, ctNeurons+cBiasNeuronCt>>>(this);
         }
-        cudaDeviceSynchronize();
+        // cudaDeviceSynchronize();
         #else
         for (count_t i = 0; i < ctNeurons+cBiasNeuronCt; i++)
         {
