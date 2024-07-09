@@ -123,7 +123,7 @@ public:
             delete[] next->weights[neuron];
             next->weights[neuron] = nextLayerNewWeights;
         }
-        next->prevLayerSize = size+1;
+        next->prevLayerSize = static_cast<count_t>(size+1);
         ////////////////////////////////
 
 
@@ -364,7 +364,7 @@ public:
     }
     LayerV2 *parseLayer(std::string str)
     {
-        count_t layerIndex = str.find("Layer");
+        count_t layerIndex = static_cast<count_t>(str.find("Layer"));
         if(layerIndex == std::string::npos)
         {
             return nullptr;
@@ -372,13 +372,13 @@ public:
 
         std::string layerNum = str.substr(layerIndex + 5, str.find(":", layerIndex+5) - layerIndex - 5);
         std::string ctNeurons = str.substr(str.find(":",layerIndex) + 2, str.find("\n", layerIndex) - str.find(":", layerIndex) - 2);
-        layerIndex = str.find("\n", layerIndex+1);
+        layerIndex = static_cast<count_t>(str.find("\n", layerIndex+1));
         LayerV2 *newLayer = addLayer(count_t(std::stoi(ctNeurons)), NONE);
         for(count_t i = 0; i < newLayer->size; i++)
         {
             std::string actString = str.substr(str.find("\n",layerIndex) + 1, str.find(",",layerIndex) - str.find("\n",layerIndex) - 1);
             ActivationFunctionType activationFunction = (ActivationFunctionType)std::stoi(actString);
-            layerIndex = str.find("\n", layerIndex+1);
+            layerIndex = static_cast<count_t>(str.find("\n", layerIndex+1));
             if(activationFunction < NONE) 
             {
                 newLayer->actiFun[i] = activationFunction;
