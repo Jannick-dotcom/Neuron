@@ -11,6 +11,7 @@ public:
     count_t prevLayerSize = 0;
     LayerV2(count_t size, count_t prevLayerSize, ActivationFunctionType activationFunction)
     {
+        biases = nullptr;
         actiFun = new ActivationFunctionType[size];
         for(count_t i = 0; i < size; i++)
         {
@@ -79,11 +80,141 @@ public:
                     file << ", " << weights[i][c];
                 }
             }
-            // if(biases != nullptr)
-            // {
-            //     file << "\tBias:" << biases[i]; //TODO: export biases
-            // }
+            if(biases != nullptr)
+            {
+                uint64_t iWeight;
+                memcpy(&iWeight, &(biases[i]), sizeof(biases[i]));
+                file << ", " << iWeight; //last weight is always a bias
+            }
             file << "\n";
+        }
+    }
+    
+    void addNeuron(ActivationFunctionType type)
+    {
+        weight_t **newWeights = new weight_t*[size+1];
+        weight_t *newBiases = new weight_t[size+1];
+        ActivationFunctionType *newActiFuns = new ActivationFunctionType[size+1];
+        for(count_t i = 0; i < size; i++) //iterate over every old neuron
+        {
+            newWeights[i] = weights[i];
+            newBiases[i] = biases[i];
+            newActiFuns[i] = actiFun[i];
+        }
+        newWeights[size] = new weight_t[prevLayerSize];
+
+        for(count_t conn = 0; conn < prevLayerSize; conn++)
+        {
+            newWeights[size][conn] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
+        }
+
+        newBiases[size] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
+        newActiFuns[size] = type;
+
+        //fix connections of next layer
+        for(count_t neuron = 0; neuron < next->size; neuron++)
+        {
+            weight_t *nextLayerNewWeights = new weight_t[size+1];
+            for(count_t conn = 0; conn < this->size; conn++)
+            {
+                nextLayerNewWeights[conn] = next->weights[neuron][conn];
+            }
+            nextLayerNewWeights[this->size] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
+            delete[] next->weights[neuron];
+            next->weights[neuron] = nextLayerNewWeights;
+        }
+        next->prevLayerSize = static_cast<count_t>(size+1);
+        ////////////////////////////////
+
+
+        in_out_t *newActivations = new in_out_t[size+1]; //No need to copy these
+        delete[] weights;
+        delete[] biases;
+        delete[] actiFun;
+        delete[] activations;
+        weights = newWeights;
+        biases = newBiases;
+        actiFun = newActiFuns;
+        activations = newActivations;
+        size++;
+    }
+    void removeNeuron(count_t neuronIndex)
+    {
+        weight_t **newWeights = new weight_t*[size-1];
+        in_out_t *newActivations = new in_out_t[size-1]; //No need to copy these
+        weight_t *newBiases = new weight_t[size-1];
+        ActivationFunctionType *newActiFuns = new ActivationFunctionType[size-1];
+        for(count_t i = 0; i < size; i++) //iterate over every old neuron
+        {
+            if(i == neuronIndex) continue;
+            newWeights[i] = weights[i];
+            newBiases[i] = biases[i];
+            newActiFuns[i] = actiFun[i];
+        }
+
+        //fix connections of next layer
+        for(count_t neuron = 0; neuron < next->size; neuron++)
+        {
+            weight_t *nextLayerNewWeights = new weight_t[size-1];
+            for(count_t conn = 0; conn < this->size; conn++)
+            {
+                if(conn == neuronIndex) continue;
+                nextLayerNewWeights[conn] = next->weights[neuron][conn];
+            }
+            delete[] next->weights[neuron];
+            next->weights[neuron] = nextLayerNewWeights;
+        }
+        next->prevLayerSize = static_cast<count_t>(size-1);
+        ////////////////////////////////
+
+
+        delete[] weights;
+        delete[] biases;
+        delete[] actiFun;
+        delete[] activations;
+        weights = newWeights;
+        biases = newBiases;
+        actiFun = newActiFuns;
+        activations = newActivations;
+        size--;
+    }
+    void mutate(weight_t mutationRate)
+    {
+        //to leave the chance that the layer does not mutate at all, we do modulo n+1
+        uint8_t mutationSpecifier; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
+        if(next == nullptr) 
+        {
+            mutationSpecifier = 2; //if current layer is output layer, force only changing the weights
+        }
+        else
+        {
+            mutationSpecifier = uint8_t(rand() % 4); // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
+        }
+        switch (mutationSpecifier)
+        {
+            case 0: // add neuron
+                addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
+                break;
+            case 1: // remove neuron
+                removeNeuron(count_t(rand() % size));
+                break;
+            case 2: // change connection
+            {
+                count_t neuronSpecifier = count_t(rand() % size);
+                count_t connectionSpecifier = count_t(rand() % prevLayerSize);
+                weight_t weightchange = ((weight_t)rand() / (weight_t)RAND_MAX - (weight_t)0.5) * mutationRate;
+                weights[neuronSpecifier][connectionSpecifier] += weightchange;
+                break;
+            }
+            case 3: //change activation function
+            {
+                count_t neuronSpecifier = count_t(rand() % size);
+                ActivationFunctionType newActivationfunction = (ActivationFunctionType)(rand() % ActivationFunctionType::NONE);
+                actiFun[neuronSpecifier] = newActivationfunction;
+                break;
+            }
+            default:
+                break;
         }
     }
 };
@@ -98,6 +229,7 @@ public:
     {
         firstLayer = nullptr;
         lastLayer = nullptr;
+        ctLayers = 0;
     }
     ~NetworkV2()
     {
@@ -111,6 +243,7 @@ public:
     }
     LayerV2 *addLayer(count_t size, ActivationFunctionType activationFunction)
     {
+        ctLayers++;
         if(firstLayer == nullptr)
         {
             firstLayer = new LayerV2(size, 0, activationFunction);
@@ -176,7 +309,6 @@ public:
     {
         std::size_t globalStart = 0;
         count_t connectionIndex = 0;
-        count_t neuronIndex = 0;
         count_t currentNeuron = 0;
         if(currentLayer == firstLayer) //If the current layer is the input layer
         {
@@ -203,16 +335,22 @@ public:
                 uint64_t weightValInt = std::stoul(weight);
                 weight_t weightValfloat;
                 std::memcpy(&weightValfloat, &weightValInt, sizeof(weight_t));
-                currentLayer->weights[currentNeuron][connectionIndex] = weightValfloat;
                 
+                if(connectionIndex == currentLayer->prevLayerSize) //If bias
+                {
+                    currentLayer->biases[currentNeuron] = weightValfloat;
+                }
+                else //if normal connection
+                {
+                    currentLayer->weights[currentNeuron][connectionIndex] = weightValfloat;
+                }
                 connectionIndex++;
                 globalStart = end;
-                if(connectionIndex == currentLayer->prevLayerSize-1) //If the current neuron has no more connections
+                if(connectionIndex == currentLayer->prevLayerSize+1)
                 {
                     connectionIndex = 0; //Reset the connection index
                     currentNeuron++;    //Move to the next neuron
-                    neuronIndex++;     //Increment the neuron index
-                    if(neuronIndex == currentLayer->size-1) //If the current layer has no more neurons
+                    if(currentNeuron == currentLayer->size) //If the current layer has no more neurons
                     {
                         break;
                     }
@@ -226,8 +364,7 @@ public:
     }
     LayerV2 *parseLayer(std::string str)
     {
-        //TODO: import biases
-        count_t layerIndex = str.find("Layer");
+        count_t layerIndex = static_cast<count_t>(str.find("Layer"));
         if(layerIndex == std::string::npos)
         {
             return nullptr;
@@ -235,13 +372,13 @@ public:
 
         std::string layerNum = str.substr(layerIndex + 5, str.find(":", layerIndex+5) - layerIndex - 5);
         std::string ctNeurons = str.substr(str.find(":",layerIndex) + 2, str.find("\n", layerIndex) - str.find(":", layerIndex) - 2);
-        layerIndex = str.find("\n", layerIndex+1);
+        layerIndex = static_cast<count_t>(str.find("\n", layerIndex+1));
         LayerV2 *newLayer = addLayer(count_t(std::stoi(ctNeurons)), NONE);
         for(count_t i = 0; i < newLayer->size; i++)
         {
             std::string actString = str.substr(str.find("\n",layerIndex) + 1, str.find(",",layerIndex) - str.find("\n",layerIndex) - 1);
             ActivationFunctionType activationFunction = (ActivationFunctionType)std::stoi(actString);
-            layerIndex = str.find("\n", layerIndex+1);
+            layerIndex = static_cast<count_t>(str.find("\n", layerIndex+1));
             if(activationFunction < NONE) 
             {
                 newLayer->actiFun[i] = activationFunction;
@@ -259,32 +396,42 @@ public:
     {
         std::ifstream file;
         file.open(fileName);
-        std::string lines;
-        std::string line;
-        
-        while(std::getline(file, line))
+        if(file.good())
         {
-            if(line.find("Cost:") != std::string::npos) continue;
-            if(line != "")
+            std::string lines;
+            std::string line;
+            
+            while(std::getline(file, line))
             {
-                lines.append(line);
-                lines.append("\n");
-            }
-            else
-            {
-                LayerV2 *newLayer = parseLayer(lines);
-                if(newLayer != nullptr)
+                if(line.find("Cost:") != std::string::npos) continue;
+                if(line != "")
                 {
-                    getConnections(lines, newLayer);
+                    lines.append(line);
+                    lines.append("\n");
                 }
-                lines = "";
+                else
+                {
+                    LayerV2 *newLayer = parseLayer(lines);
+                    if(newLayer != nullptr)
+                    {
+                        getConnections(lines, newLayer);
+                    }
+                    lines = "";
+                }
             }
+            file.close();
         }
-        file.close();
     }
 
     void mutate(double mutationRate)
     {
-        return;
+        uint8_t layerSpecifier = uint8_t((rand() % (ctLayers-1)) + 1); //select a random layer
+        //Also give the chance that no layer is mutated (By excluding the first and last layer)
+        if(layerSpecifier == 0) return; //Don't mutate the input layer
+
+        LayerV2 *currentLayer = firstLayer; //Get the first layer
+        for(count_t i = 0; i < layerSpecifier; i++) 
+            currentLayer = currentLayer->next; //Get the specified random layer
+        currentLayer->mutate((weight_t)mutationRate); //Mutate the specified layer
     }
 };
