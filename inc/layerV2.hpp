@@ -19,9 +19,11 @@ public:
     LayerV2(count_t size, count_t prevLayerSize, ActivationFunctionType activationFunction)
     {
         biases = nullptr;
+        printf("Allocating activation functions\n");
         actiFun = new ActivationFunctionType[size];
         for(count_t i = 0; i < size; i++)
         {
+            printf("Setting activation function\n");
             actiFun[i] = activationFunction;
         }
         if(prevLayerSize > 0)
@@ -29,6 +31,7 @@ public:
             weights = new weight_t*[size];
             for(count_t i = 0; i < size; i++)
             {
+                printf("setting random weights\n");
                 weights[i] = new weight_t[prevLayerSize];
                 for(count_t j = 0; j < prevLayerSize; j++)
                 {
@@ -249,6 +252,7 @@ public:
     {
         #ifdef useGPU
         feedThroughGPU<<<1, size>>>(this, inputs, sizeOfLastLayer);
+        cudaDeviceSynchronize();
         #else
         for(count_t i = 0; i < size; i++)
         {
@@ -273,16 +277,31 @@ public:
     void* operator new(size_t size)
     {
         void *temp;
-        cudaMallocManaged(&temp, size);
+        cudaError_t ret = cudaMallocManaged(&temp, size);
+        if(ret != cudaError::cudaSuccess)
+        {
+            printf("Layer: Malloc failed with code %d\n", ret);
+            exit(1);
+        }
         return temp;
     }
     void operator delete(void* ptr)
     {
-        cudaFree(ptr);
+        cudaError_t ret = cudaFree(ptr);
+        if(ret != cudaError::cudaSuccess)
+        {
+            printf("Layer: delete failed with code %d\n", ret);
+            exit(1);
+        }
     }
     void operator delete[](void* ptr)
     {
-        cudaFree(ptr);
+        cudaError_t ret = cudaFree(ptr);
+        if(ret != cudaError::cudaSuccess)
+        {
+            printf("Layer: delete[] failed with code %d\n", ret);
+            exit(1);
+        }
     }
     #endif
 };

@@ -227,16 +227,31 @@ public:
     void* operator new(size_t size)
     {
         void *temp;
-        cudaMallocManaged(&temp, size);
+        cudaError_t ret = cudaMallocManaged(&temp, size);
+        if(ret != cudaError::cudaSuccess)
+        {
+            printf("Network: Malloc failed with code %d\n", ret);
+            exit(1);
+        }
         return temp;
     }
     void operator delete(void* ptr)
     {
-        cudaFree(ptr);
+        cudaError_t ret = cudaFree(ptr);
+        if(ret != cudaError::cudaSuccess)
+        {
+            printf("Network: delete failed with code %d\n", ret);
+            exit(1);
+        }
     }
     void operator delete[](void* ptr)
     {
-        cudaFree(ptr);
+        cudaError_t ret = cudaFree(ptr);
+        if(ret != cudaError::cudaSuccess)
+        {
+            printf("Network: delete[] failed with code %d\n", ret);
+            exit(1);
+        }
     }
     #endif
 };
