@@ -86,7 +86,9 @@ public:
             currentLayer->feedThrough();
             currentLayer = currentLayer->nextLayer;
         }
+        #ifdef useGPU
         cudaDeviceSynchronize();
+        #endif
     }
     void clearGradients()
     {

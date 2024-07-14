@@ -6,7 +6,9 @@
 #include <fstream>
 #include "layerV2.hpp"
 
+#ifdef useGPU
 __global__ extern void feedThroughGPU(LayerV2 *currentLayer, in_out_t *inputs, count_t sizeOfLastLayer);
+#endif
 class NetworkV2
 {
 public:
@@ -37,7 +39,7 @@ public:
         {
             printf("\tcreating input layer\n");
             firstLayer = new LayerV2(size, 0, activationFunction);
-            printf("\tcomplete");
+            printf("\tcomplete\n");
             lastLayer = firstLayer;
             return firstLayer;
         }
@@ -45,7 +47,7 @@ public:
         {
             printf("\tcreating next layer\n");
             LayerV2 *tempLayer = new LayerV2(size, lastLayer->size, activationFunction);
-            printf("\tcomplete");
+            printf("\tcomplete\n");
             lastLayer->next = tempLayer;
             lastLayer = tempLayer;
             return tempLayer;
