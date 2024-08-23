@@ -9,21 +9,26 @@
 #ifdef useGPU
 __global__ extern void feedThroughGPU(LayerV2 *currentLayer, in_out_t *inputs, count_t sizeOfLastLayer);
 #endif
+
 class NetworkV2
 {
 public:
     LayerV2 *firstLayer;
     LayerV2 *lastLayer;
     count_t ctLayers;
+    static count_t instances;
+    count_t currentInstance;
     NetworkV2()
     {
         firstLayer = nullptr;
         lastLayer = nullptr;
         ctLayers = 0;
+        currentInstance = instances;
+        instances++;
     }
     ~NetworkV2()
     {
-        // printf("~NetworkV2\n");
+        
         LayerV2 *currentLayer = firstLayer;
         while(currentLayer != nullptr)
         {
@@ -37,22 +42,17 @@ public:
         ctLayers++;
         if(firstLayer == nullptr)
         {
-            printf("\tcreating input layer\n");
             firstLayer = new LayerV2(size, 0, activationFunction);
-            printf("\tcomplete\n");
             lastLayer = firstLayer;
             return firstLayer;
         }
         else
         {
-            printf("\tcreating next layer\n");
             LayerV2 *tempLayer = new LayerV2(size, lastLayer->size, activationFunction);
-            printf("\tcomplete\n");
             lastLayer->next = tempLayer;
             lastLayer = tempLayer;
             return tempLayer;
         }
-        printf("\tCount of Layers: %d", ctLayers);
     }
     void feedThrough(in_out_t *inputs)
     {
@@ -62,7 +62,8 @@ public:
         while(currentLayer != nullptr)
         {
     #ifdef useGPU
-            feedThroughGPU<<<1, currentLayer->size>>>(currentLayer, outputsOfLastLayer, sizeOfLastLayer);
+            feedThroughGPU<<<currentInstance, currentLayer->size>>>(currentLayer, outputsOfLastLayer, sizeOfLastLayer);
+            cudaDeviceSynchronize();
     #else
             currentLayer->feedThrough(outputsOfLastLayer, sizeOfLastLayer);
     #endif
@@ -148,20 +149,15 @@ public:
     }
     LayerV2 *parseLayer(std::string str)
     {
-        printf("parsing Layer\n");
         count_t layerIndex = static_cast<count_t>(str.find("Layer"));
         if(layerIndex == std::string::npos)
         {
             return nullptr;
         }
         std::string layerNum = str.substr(layerIndex + 5, str.find(":", layerIndex+5) - layerIndex - 5);
-        printf("found layer %s\n", layerNum.c_str());
         std::string ctNeurons = str.substr(str.find(":",layerIndex) + 2, str.find("\n", layerIndex) - str.find(":", layerIndex) - 2);
-        printf("Layer has %s Neurons\n", ctNeurons.c_str());
         layerIndex = static_cast<count_t>(str.find("\n", layerIndex+1));
-        printf("Adding Layer to network\n");
         LayerV2 *newLayer = addLayer(count_t(std::stoi(ctNeurons)), NONE);
-        printf("Setting activation functions\n");
         for(count_t i = 0; i < newLayer->size; i++)
         {
             std::string actString = str.substr(str.find("\n",layerIndex) + 1, str.find(",",layerIndex) - str.find("\n",layerIndex) - 1);
@@ -173,7 +169,6 @@ public:
             }
             else
             {
-                printf("ERROR: Activation function not found\n");
                 throw std::system_error();
                 return nullptr;
             }
@@ -201,9 +196,7 @@ public:
                     LayerV2 *newLayer = parseLayer(lines);
                     if(newLayer != nullptr)
                     {
-                        printf("Getting connections\n");
                         getConnections(lines, newLayer);
-                        printf("Got connections\n");
                     }
                     lines = "";
                 }
@@ -224,7 +217,7 @@ public:
         currentLayer->mutate((weight_t)mutationRate); //Mutate the specified layer
     }
     #ifdef useGPU
-    void* operator new(size_t size)
+    __host__ void* operator new(size_t size)
     {
         void *temp;
         cudaError_t ret = cudaMallocManaged(&temp, size);
@@ -235,7 +228,7 @@ public:
         }
         return temp;
     }
-    void operator delete(void* ptr)
+    __host__ void operator delete(void* ptr)
     {
         cudaError_t ret = cudaFree(ptr);
         if(ret != cudaError::cudaSuccess)
@@ -244,7 +237,7 @@ public:
             exit(1);
         }
     }
-    void operator delete[](void* ptr)
+    __host__ void operator delete[](void* ptr)
     {
         cudaError_t ret = cudaFree(ptr);
         if(ret != cudaError::cudaSuccess)

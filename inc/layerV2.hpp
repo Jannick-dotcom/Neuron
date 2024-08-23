@@ -19,11 +19,9 @@ public:
     LayerV2(count_t size, count_t prevLayerSize, ActivationFunctionType activationFunction)
     {
         biases = nullptr;
-        printf("Allocating activation functions\n");
         actiFun = new ActivationFunctionType[size];
         for(count_t i = 0; i < size; i++)
         {
-            printf("Setting activation function\n");
             actiFun[i] = activationFunction;
         }
         if(prevLayerSize > 0)
@@ -31,7 +29,6 @@ public:
             weights = new weight_t*[size];
             for(count_t i = 0; i < size; i++)
             {
-                printf("setting random weights\n");
                 weights[i] = new weight_t[prevLayerSize];
                 for(count_t j = 0; j < prevLayerSize; j++)
                 {
@@ -51,18 +48,17 @@ public:
     }
     ~LayerV2()
     {
-        // printf("~LayerV2\n");
         if(prevLayerSize > 0)
         {
             for(count_t i = 0; i < size; i++)
             {
-                delete[] weights[i];
+                if (weights[i] != NULL) delete[] weights[i];
             }
-            delete[] weights;
-            delete[] biases;
+            if (weights != NULL) delete[] weights;
+            if (biases != NULL) delete[] biases;
         }
-        delete[] actiFun;
-        delete[] activations;
+        if (actiFun != NULL) delete[] actiFun;
+        if (activations != NULL) delete[] activations;
     }
     void exportToFile(std::ofstream &file, bool humanReadable)
     {
@@ -155,7 +151,6 @@ public:
         in_out_t *newActivations = new in_out_t[size-1]; //No need to copy these
         weight_t *newBiases = new weight_t[size-1];
         ActivationFunctionType *newActiFuns = new ActivationFunctionType[size-1];
-        printf("Copy neurons\n");
         count_t newIndex = 0;
         for(count_t i = 0; i < size; i++) //iterate over every old neuron
         {
@@ -166,13 +161,11 @@ public:
             newIndex++;
         }
 
-        printf("Remove connection to next layer of size %d\n", next->size);
         //fix connections of next layer
         for(count_t neuron = 0; neuron < next->size; neuron++)
         {
             weight_t *nextLayerNewWeights = new weight_t[size-1];
             count_t newWeightIndex = 0;
-            printf("\tcopy weights of neuron %d\n", neuron);
             for(count_t conn = 0; conn < this->size; conn++)
             {
                 if(conn == neuronIndex) continue;
@@ -189,17 +182,14 @@ public:
         {
             printf("Bitch\n");
         }
-        printf("Delete old members\n");
         delete[] weights;
         delete[] biases;
         delete[] actiFun;
         delete[] activations;
-        printf("Set new members active\n");
         weights = newWeights;
         biases = newBiases;
         actiFun = newActiFuns;
         activations = newActivations;
-        printf("Set new size\n");
         size--;
     }
     void mutate(weight_t mutationRate)
@@ -217,11 +207,9 @@ public:
         switch (mutationSpecifier)
         {
             case 0: // add neuron
-                printf("Add neuron\n");
                 addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
                 break;
             case 1: // remove neuron
-                printf("Remove neuron\n");
                 removeNeuron(count_t(rand() % size));
                 break;
             case 2: // change connection
@@ -274,7 +262,7 @@ public:
         #endif
     }
     #ifdef useGPU
-    void* operator new(size_t size)
+    __host__ void* operator new(size_t size)
     {
         void *temp;
         cudaError_t ret = cudaMallocManaged(&temp, size);
@@ -285,7 +273,7 @@ public:
         }
         return temp;
     }
-    void operator delete(void* ptr)
+    __host__ void operator delete(void* ptr)
     {
         cudaError_t ret = cudaFree(ptr);
         if(ret != cudaError::cudaSuccess)
@@ -294,7 +282,7 @@ public:
             exit(1);
         }
     }
-    void operator delete[](void* ptr)
+    __host__ void operator delete[](void* ptr)
     {
         cudaError_t ret = cudaFree(ptr);
         if(ret != cudaError::cudaSuccess)
