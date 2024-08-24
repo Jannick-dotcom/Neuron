@@ -239,6 +239,13 @@ public:
                 actiFun[neuronSpecifier] = newActivationfunction;
                 break;
             }
+            case 4: //change bias
+            {
+                count_t neuronSpecifier = count_t(rand() % size);
+                weight_t weightchange = ((weight_t)rand() / (weight_t)RAND_MAX - (weight_t)0.5) * mutationRate;
+                biases[neuronSpecifier] += weightchange;
+                break;
+            }
             default:
                 break;
         }
@@ -251,8 +258,23 @@ public:
     void feedThrough(in_out_t *inputs, count_t sizeOfLastLayer)
     {
         #ifdef useGPU
-        feedThroughGPU<<<1, size>>>(this, inputs, sizeOfLastLayer);
-        cudaDeviceSynchronize();
+        if(sizeOfLastLayer == 0)
+        {
+            for(count_t i = 0; i < size; i++)
+            {
+                activations[i] = inputs[i];
+            }
+        }
+        else 
+        {
+            feedThroughGPU<<<1, size>>>(this, inputs, sizeOfLastLayer);
+            // cudaError_t ret = cudaDeviceSynchronize();
+            // if(ret != cudaError::cudaSuccess)
+            // {
+            //     printf("Layer: cudaDeviceSynchronize failed with code %d\n", ret);
+            //     exit(1);
+            // }
+        }
         #else
         for(count_t i = 0; i < size; i++)
         {
