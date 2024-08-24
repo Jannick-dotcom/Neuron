@@ -75,6 +75,11 @@ public:
     {
         std::ofstream file;
         file.open(fileName);
+        if (!file.good())
+        {
+            // printf("File could not be opened\n");
+            exit(1);
+        }
         LayerV2 *currentLayer = firstLayer;
         count_t layerNum = 0;
         while(currentLayer != nullptr)
