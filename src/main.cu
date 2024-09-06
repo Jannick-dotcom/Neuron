@@ -1,34 +1,22 @@
+#include <sys/time.h>
 #include "networkV2.hpp"
-count_t NetworkV2::instances = 0;
-__global__ void feedThroughGPU(LayerV2 *currentLayer, in_out_t *inputs, count_t sizeOfLastLayer)
-{
-    unsigned int row = blockDim.x*blockIdx.x + threadIdx.x;
-    in_out_t weightedSum = 0;
-    if(currentLayer->prevLayerSize > 0) 
-    {
-        weightedSum = currentLayer->biases[row];
-        for(count_t iWeights = 0; iWeights < currentLayer->prevLayerSize; iWeights++)
-        {
-            weightedSum += inputs[iWeights] * currentLayer->weights[row][iWeights];
-        }
-    }
-    else
-    {
-        weightedSum = inputs[row];
-    }
-    currentLayer->activations[row] = activationFunction(currentLayer->actiFun[row], weightedSum); //make ReLu
-}
-
 int main()
 {
-    NetworkV2 net;
-    net.addLayer(1, LINEAR);
-    net.addLayer(100, SIGMOID);
-    net.addLayer(100, SIGMOID);
-    net.addLayer(1, LINEAR);
-    in_out_t *inputs = new in_out_t[5];
-    for(count_t i = 0; i < 10000; i++)
+    NetworkV2 *net = new NetworkV2();
+    net->addLayer(1, LINEAR);
+    net->addLayer(10000, SIGMOID);
+    net->addLayer(10000, SIGMOID);
+    net->addLayer(1, LINEAR);
+    in_out_t *inputs = new in_out_t[net->firstLayer->size];
+    struct timeval t1, t2;
+    uint32_t i = 0;
+    gettimeofday(&t1, 0);
+    for(; i < 1000; i++)
     {
-        net.feedThrough(inputs);
+        net->feedThrough(inputs);
     }
+    gettimeofday(&t2, 0);
+    double time = (1000000.0*(t2.tv_sec-t1.tv_sec) + t2.tv_usec-t1.tv_usec)/1000.0;
+    printf("Time to generate:  %3.1f ms \n", time);//335ms
+    delete net;
 }

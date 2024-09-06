@@ -2,6 +2,7 @@
 #include "networkV2.hpp"
 #include <iostream>
 #include <random>
+#include <sys/time.h>
 
 #include "neuronTypes.hpp"
 
@@ -92,21 +93,23 @@ void doMutating(Network *net, count_t countAgents, count_t countGenerations)
 
 void test()
 {
-    in_out_t inputs[2];
-    for(int i = 0; i < 10000; i++)
+    NetworkV2 *net = new NetworkV2();
+    net->addLayer(1, LINEAR);
+    net->addLayer(10000, SIGMOID);
+    net->addLayer(10000, SIGMOID);
+    net->addLayer(1, LINEAR);
+    in_out_t *inputs = new in_out_t[net->firstLayer->size];
+    struct timeval t1, t2;
+    uint32_t i = 0;
+    gettimeofday(&t1, 0);
+    for(; i < 1000; i++)
     {
-        inputs[0] = i % 20;
-        inputs[1] = i;
-        NetworkV2 *net = new NetworkV2();
-        net->addLayer(2, LINEAR);
-        net->addLayer(20, SIGMOID);
-        net->addLayer(5, RELU);
-        net->addLayer(1, SIGMOID);
         net->feedThrough(inputs);
-        double cost = costFunction(CostFunctionType::CostQUADRATIC, net->lastLayer->activations[0], 0.2);
-        printf("%lf\n", cost);
-        delete net;
     }
+    gettimeofday(&t2, 0);
+    double time = (1000000.0*(t2.tv_sec-t1.tv_sec) + t2.tv_usec-t1.tv_usec)/1000.0;
+    printf("Time to generate:  %3.1f ms \n", time);//169834.2 ms
+    delete net;
 }
 
 int main()
@@ -116,8 +119,8 @@ int main()
     Network *net = new Network(CostQUADRATIC);
     // net->importNetwork("network.txt");
     net->addLayer(2, LINEAR);
-    net->addLayer(20, RELU);
-    net->addLayer(5, RELU);
+    net->addLayer(10000, SIGMOID);
+    net->addLayer(10000, SIGMOID);
     net->addLayer(1, LINEAR);
     net->cost = 100;
     // doMutating(net, 100, 50);
