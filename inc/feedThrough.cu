@@ -55,6 +55,7 @@ in_out_t activationFunctionDerivative(ActivationFunctionType type, in_out_t inpu
     }
 }
 
+#ifdef useGPU
 __global__ void feedThroughGPU(LayerV2 *currentLayer, in_out_t *inputs)
 {
     count_t row = blockDim.x*blockIdx.x + threadIdx.x;
@@ -66,3 +67,4 @@ __global__ void feedThroughGPU(LayerV2 *currentLayer, in_out_t *inputs)
     }
     currentLayer->activations[row] = activationFunction(currentLayer->actiFun[row], weightedSum); //make ReLu
 }
+#endif
