@@ -1,4 +1,5 @@
 #include "networkV2.hpp"
+#include <cstring>
 
 NetworkV2::NetworkV2()
 {

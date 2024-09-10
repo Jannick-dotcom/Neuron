@@ -9,6 +9,9 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "-I${workspaceFolder}/inc/",
+                "-x",
+                "c++",
+                "${workspaceFolder}/inc/*.cu",
                 "${workspaceFolder}/src/main.cpp",
                 "-o",
                 "${workspaceFolder}/build/a.out"

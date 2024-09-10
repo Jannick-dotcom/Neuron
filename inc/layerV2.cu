@@ -1,7 +1,7 @@
 #include "layerV2.hpp"
 #include "neuronTypes.hpp"
 #include "activationFun.hpp"
-
+#include <cstring>
 
 LayerV2::LayerV2(count_t size, count_t prevLayerSize, ActivationFunctionType activationFunction)
 {
