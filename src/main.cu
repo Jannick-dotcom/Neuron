@@ -23,7 +23,7 @@ int main()
         net->feedThrough(inputs);
         if(net->lastLayer->activations[0] != lastoutput)
         {
-            printf("Last output: %d, this: %d\n", lastoutput, net->lastLayer->activations[0]);
+            printf("Last output: %f, this: %f\n", lastoutput, net->lastLayer->activations[0]);
             lastoutput = net->lastLayer->activations[0];
         }
     }

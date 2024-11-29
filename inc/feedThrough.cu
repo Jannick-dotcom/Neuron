@@ -25,6 +25,7 @@ in_out_t activationFunction(ActivationFunctionType type, in_out_t input)
         return (in_out_t)(input > 0 ? input : 0.01 * input);
         break;
     default:
+        printf("Invalid activation Function\n");
         return input;
         break;
     }
