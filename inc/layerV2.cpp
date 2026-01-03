@@ -177,7 +177,7 @@ void LayerV2::removeNeuron(count_t neuronIndex)
 
     if(weights == nullptr || biases == nullptr || actiFun == nullptr || activations == nullptr)
     {
-        printf("Error\n");
+        printf("Bitch\n");
     }
     delete[] weights;
     delete[] biases;
