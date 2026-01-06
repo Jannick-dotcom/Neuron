@@ -269,7 +269,7 @@ public:
             if(start != (uint32_t)-1 && end != (uint32_t)-1) //If the connection is valid
             {
                 std::string weight = str.substr(start, end - start); //Get the weight of the connection
-                uint64_t weightValInt = std::stoul(weight);
+                uint64_t weightValInt = std::stoull(weight);
                 weight_t weightValfloat;
                 std::memcpy(&weightValfloat, &weightValInt, sizeof(weight_t));
                 currentNeuron->connectionsIn[connectionIndex].weight = weightValfloat;
