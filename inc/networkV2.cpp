@@ -1,14 +1,12 @@
 #include "networkV2.hpp"
 #include <cstring>
 
+#ifndef useGPU
 NetworkV2::NetworkV2()
 {
     firstLayer = nullptr;
     lastLayer = nullptr;
     ctLayers = 0;
-    #ifdef useGPU
-    cudaStreamCreate(&currentInstance);
-    #endif
 }
 NetworkV2::~NetworkV2()
 {
@@ -19,42 +17,37 @@ NetworkV2::~NetworkV2()
         delete currentLayer;
         currentLayer = nextLayer;
     }
-    #ifdef useGPU
-    cudaStreamDestroy(currentInstance);
-    #endif
 }
 LayerV2 *NetworkV2::addLayer(count_t size, ActivationFunctionType activationFunction)
 {
     ctLayers++;
+    LayerV2 *tempLayer;
     if(firstLayer == nullptr)
     {
-        firstLayer = new LayerV2(size, 0, activationFunction);
-        lastLayer = firstLayer;
-        return firstLayer;
+        tempLayer = new LayerV2(size, 0, activationFunction);
+        firstLayer = tempLayer;
     }
     else
     {
-        LayerV2 *tempLayer = new LayerV2(size, lastLayer->size, activationFunction);
+        tempLayer = new LayerV2(size, lastLayer->size, activationFunction);
         lastLayer->next = tempLayer;
-        lastLayer = tempLayer;
-        return tempLayer;
     }
+    lastLayer = tempLayer;
+    return tempLayer;
 }
+
 void NetworkV2::feedThrough(in_out_t *inputs)
 {
     LayerV2 *currentLayer = firstLayer;
     in_out_t *outputsOfLastLayer = inputs;
     while(currentLayer != nullptr)
     {
-        #ifdef useGPU
-        currentLayer->feedThrough(outputsOfLastLayer, currentInstance);
-        #else
         currentLayer->feedThrough(outputsOfLastLayer);
-        #endif
         outputsOfLastLayer = currentLayer->activations;
         currentLayer = currentLayer->next;
     }
 }
+#endif
 void NetworkV2::exportNetwork(std::string fileName, bool humanReadable)
 {
     std::ofstream file;

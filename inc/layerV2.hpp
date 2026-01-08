@@ -5,6 +5,10 @@
 #include "activationFun.hpp"
 #include <fstream>
 
+#ifdef useGPU
+#include <cuda_runtime.h>
+#endif
+
 class LayerV2
 {
 public:
@@ -22,7 +26,7 @@ public:
     void removeNeuron(count_t neuronIndex);
     void mutate(weight_t mutationRate);
     #ifdef useGPU
-    __global__ friend void feedThroughGPU(LayerV2 *currentLayer, in_out_t *inputs);
+    __global__ friend void feedThroughGPU(weight_t **weights, weight_t *biases, in_out_t *inputs, in_out_t *activations, count_t prevLayerSize, ActivationFunctionType *actiFun);
     #endif
 
     #ifdef useGPU

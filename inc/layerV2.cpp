@@ -3,6 +3,7 @@
 #include "activationFun.hpp"
 #include <cstring>
 
+#ifndef useGPU
 LayerV2::LayerV2(count_t size, count_t prevLayerSize, ActivationFunctionType activationFunction)
 {
     biases = nullptr;
@@ -28,7 +29,7 @@ LayerV2::LayerV2(count_t size, count_t prevLayerSize, ActivationFunctionType act
             biases[i] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
         }
     }
-    activations = new in_out_t[size];
+    this->activations = new in_out_t[size];
     this->size = size;
     this->prevLayerSize = prevLayerSize;
     this->next = nullptr;
@@ -46,42 +47,6 @@ LayerV2::~LayerV2()
     }
     if (actiFun != NULL) delete[] actiFun;
     if (activations != NULL) delete[] activations;
-}
-void LayerV2::exportToFile(std::ofstream &file, bool humanReadable)
-{
-    for (count_t i = 0; i < size; i++)
-    {
-        if(actiFun[i] < NONE)
-        {
-            file << actiFun[i];
-        }
-        else if(actiFun[i] > NONE)
-        {
-            printf("ERROR Neuron Type: %d", actiFun[i]);
-            throw std::system_error();
-            exit(1);
-        }
-        for (count_t c = 0; c < prevLayerSize; c++)
-        {
-            if(!humanReadable)
-            {
-                uint64_t iWeight;
-                memcpy(&iWeight, &(weights[i][c]), sizeof(weights[i][c]));
-                file << ", " << iWeight;
-            }
-            else
-            {
-                file << ", " << weights[i][c];
-            }
-        }
-        if(biases != nullptr)
-        {
-            uint64_t iWeight;
-            memcpy(&iWeight, &(biases[i]), sizeof(biases[i]));
-            file << ", " << iWeight; //last weight is always a bias
-        }
-        file << "\n";
-    }
 }
 
 void LayerV2::addNeuron(ActivationFunctionType type)
@@ -189,6 +154,28 @@ void LayerV2::removeNeuron(count_t neuronIndex)
     activations = newActivations;
     size--;
 }
+void LayerV2::feedThrough(in_out_t *inputs)
+{
+    for(count_t i = 0; i < size; i++)
+    {
+        in_out_t weightedSum = 0;
+        if(prevLayerSize > 0) 
+        {
+            weightedSum = biases[i];
+            for(count_t iWeights = 0; iWeights < prevLayerSize; iWeights++)
+            {
+                weightedSum += inputs[iWeights] * weights[i][iWeights];
+            }
+        }
+        else
+        {
+            weightedSum = inputs[i];
+        }
+        activations[i] = activationFunction(actiFun[i], weightedSum); //make ReLu
+    }
+}
+#endif
+
 void LayerV2::mutate(weight_t mutationRate)
 {
     //to leave the chance that the layer does not mutate at all, we do modulo n+1
@@ -236,45 +223,39 @@ void LayerV2::mutate(weight_t mutationRate)
     }
 }
 
-#ifdef useGPU
-void LayerV2::feedThrough(in_out_t *inputs, cudaStream_t stream)
-#else
-void LayerV2::feedThrough(in_out_t *inputs)
-#endif
+void LayerV2::exportToFile(std::ofstream &file, bool humanReadable)
 {
-    #ifdef useGPU
-    if(prevLayerSize > 0)
+    for (count_t i = 0; i < size; i++)
     {
-        // feedThroughGPU<<<1, size, 0, stream>>>(this, inputs, sizeOfLastLayer);
-        feedThroughGPU<<<1, size>>>(this, inputs);
-        cudaError_t ret = cudaDeviceSynchronize();
-        if(ret != cudaError::cudaSuccess)
+        if(actiFun[i] < NONE)
         {
-            printf("Layer: cudaDeviceSynchronize failed with code %d\n", ret);
+            file << actiFun[i];
+        }
+        else if(actiFun[i] > NONE)
+        {
+            printf("ERROR Neuron Type: %d", actiFun[i]);
+            throw std::system_error();
             exit(1);
         }
-    }
-    else 
-    {
-    #endif
-    for(count_t i = 0; i < size; i++)
-    {
-        in_out_t weightedSum = 0;
-        if(prevLayerSize > 0) 
+        for (count_t c = 0; c < prevLayerSize; c++)
         {
-            weightedSum = biases[i];
-            for(count_t iWeights = 0; iWeights < prevLayerSize; iWeights++)
+            if(!humanReadable)
             {
-                weightedSum += inputs[iWeights] * weights[i][iWeights];
+                uint64_t iWeight;
+                memcpy(&iWeight, &(weights[i][c]), sizeof(weights[i][c]));
+                file << ", " << iWeight;
+            }
+            else
+            {
+                file << ", " << weights[i][c];
             }
         }
-        else
+        if(biases != nullptr)
         {
-            weightedSum = inputs[i];
+            uint64_t iWeight;
+            memcpy(&iWeight, &(biases[i]), sizeof(biases[i]));
+            file << ", " << iWeight; //last weight is always a bias
         }
-        activations[i] = activationFunction(actiFun[i], weightedSum); //make ReLu
+        file << "\n";
     }
-    #ifdef useGPU
-    }
-    #endif
 }

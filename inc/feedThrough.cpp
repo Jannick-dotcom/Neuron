@@ -2,9 +2,6 @@
 
 #include "activationFun.hpp"
 
-#ifdef useGPU
-__host__ __device__ 
-#endif
 in_out_t activationFunction(ActivationFunctionType type, in_out_t input)
 {
     switch (type)
@@ -55,17 +52,3 @@ in_out_t activationFunctionDerivative(ActivationFunctionType type, in_out_t inpu
         break;
     }
 }
-
-#ifdef useGPU
-__global__ void feedThroughGPU(LayerV2 *currentLayer, in_out_t *inputs)
-{
-    count_t row = blockDim.x*blockIdx.x + threadIdx.x;
-    in_out_t weightedSum = 0;
-    weightedSum = currentLayer->biases[row];
-    for(count_t iWeights = 0; iWeights < currentLayer->prevLayerSize; iWeights++)
-    {
-        weightedSum += inputs[iWeights] * currentLayer->weights[row][iWeights];
-    }
-    currentLayer->activations[row] = activationFunction(currentLayer->actiFun[row], weightedSum); //make ReLu
-}
-#endif

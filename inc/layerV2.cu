@@ -2,100 +2,79 @@
 #include "neuronTypes.hpp"
 #include "activationFun.hpp"
 #include <cstring>
+#include <cuda_runtime.h>
+#include "cudaErrorHandler.hpp"
 
+#ifdef useGPU
+__global__ extern void feedThroughGPU(weight_t **weights, weight_t *biases, in_out_t *inputs, in_out_t *activations, count_t prevLayerSize, ActivationFunctionType *actiFun);
+#endif
+
+__host__
 LayerV2::LayerV2(count_t size, count_t prevLayerSize, ActivationFunctionType activationFunction)
 {
     biases = nullptr;
-    actiFun = new ActivationFunctionType[size];
-    for(count_t i = 0; i < size; i++)
+    weights = nullptr;
+    actiFun = nullptr;
+    activations = nullptr;
+    next = nullptr;
+    CUDA_CHECK(cudaMallocManaged(&actiFun, sizeof(ActivationFunctionType) * size));
+    for(count_t i = 0; i < size; i++) 
     {
         actiFun[i] = activationFunction;
     }
     if(prevLayerSize > 0)
     {
-        weights = new weight_t*[size];
-        for(count_t i = 0; i < size; i++)
-        {
-            weights[i] = new weight_t[prevLayerSize];
-            for(count_t j = 0; j < prevLayerSize; j++)
+        CUDA_CHECK(cudaMallocManaged(&weights, sizeof(weight_t*) * size));
+        for(count_t i = 0; i < size; i++) {
+            CUDA_CHECK(cudaMallocManaged(&(weights[i]), sizeof(weight_t) * prevLayerSize));
+            for(count_t j = 0; j < prevLayerSize; j++) 
             {
                 weights[i][j] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
             }
         }
-        biases = new weight_t[size];
-        for(count_t i = 0; i < size; i++)
-        {
+        CUDA_CHECK(cudaMallocManaged(&biases, sizeof(weight_t) * size));
+        for(count_t i = 0; i < size; i++) {
             biases[i] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
         }
     }
-    activations = new in_out_t[size];
+    CUDA_CHECK(cudaMallocManaged(&activations, sizeof(in_out_t) * size));
     this->size = size;
     this->prevLayerSize = prevLayerSize;
     this->next = nullptr;
 }
+
+__host__
 LayerV2::~LayerV2()
 {
     if(prevLayerSize > 0)
     {
         for(count_t i = 0; i < size; i++)
         {
-            if (weights[i] != NULL) delete[] weights[i];
+            if (weights[i] != NULL) CUDA_CHECK(cudaFree(weights[i]));
         }
-        if (weights != NULL) delete[] weights;
-        if (biases != NULL) delete[] biases;
+        if (weights != NULL) CUDA_CHECK(cudaFree(weights));
+        if (biases != NULL) CUDA_CHECK(cudaFree(biases));
     }
-    if (actiFun != NULL) delete[] actiFun;
-    if (activations != NULL) delete[] activations;
-}
-void LayerV2::exportToFile(std::ofstream &file, bool humanReadable)
-{
-    for (count_t i = 0; i < size; i++)
-    {
-        if(actiFun[i] < NONE)
-        {
-            file << actiFun[i];
-        }
-        else if(actiFun[i] > NONE)
-        {
-            printf("ERROR Neuron Type: %d", actiFun[i]);
-            throw std::system_error();
-            exit(1);
-        }
-        for (count_t c = 0; c < prevLayerSize; c++)
-        {
-            if(!humanReadable)
-            {
-                uint64_t iWeight;
-                memcpy(&iWeight, &(weights[i][c]), sizeof(weights[i][c]));
-                file << ", " << iWeight;
-            }
-            else
-            {
-                file << ", " << weights[i][c];
-            }
-        }
-        if(biases != nullptr)
-        {
-            uint64_t iWeight;
-            memcpy(&iWeight, &(biases[i]), sizeof(biases[i]));
-            file << ", " << iWeight; //last weight is always a bias
-        }
-        file << "\n";
-    }
+    if (actiFun != NULL) CUDA_CHECK(cudaFree(actiFun));
+    if (activations != NULL) CUDA_CHECK(cudaFree(activations));
 }
 
+__host__
 void LayerV2::addNeuron(ActivationFunctionType type)
 {
-    weight_t **newWeights = new weight_t*[size+1];
-    weight_t *newBiases = new weight_t[size+1];
-    ActivationFunctionType *newActiFuns = new ActivationFunctionType[size+1];
+    weight_t **newWeights;
+    weight_t *newBiases;
+    ActivationFunctionType *newActiFuns;
+    CUDA_CHECK(cudaMallocManaged(&newWeights, sizeof(weight_t*) * (size+1)));
+    CUDA_CHECK(cudaMallocManaged(&newBiases, sizeof(weight_t) * (size+1)));
+    CUDA_CHECK(cudaMallocManaged(&newActiFuns, sizeof(ActivationFunctionType) * (size+1)));
     for(count_t i = 0; i < size; i++) //iterate over every old neuron
     {
         newWeights[i] = weights[i];
         newBiases[i] = biases[i];
         newActiFuns[i] = actiFun[i];
     }
-    newWeights[size] = new weight_t[prevLayerSize];
+    CUDA_CHECK(cudaMallocManaged(&newWeights[size], sizeof(weight_t) * prevLayerSize));
 
     for(count_t conn = 0; conn < prevLayerSize; conn++)
     {
@@ -108,30 +87,34 @@ void LayerV2::addNeuron(ActivationFunctionType type)
     //fix connections of next layer
     for(count_t neuron = 0; neuron < next->size; neuron++)
     {
-        weight_t *nextLayerNewWeights = new weight_t[size+1];
+        weight_t *nextLayerNewWeights;
+        CUDA_CHECK(cudaMallocManaged(&nextLayerNewWeights, sizeof(weight_t) * (size+1)));
         for(count_t conn = 0; conn < this->size; conn++)
         {
             nextLayerNewWeights[conn] = next->weights[neuron][conn];
         }
         nextLayerNewWeights[this->size] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
-        delete[] next->weights[neuron];
+        CUDA_CHECK(cudaFree(next->weights[neuron]));
         next->weights[neuron] = nextLayerNewWeights;
     }
     next->prevLayerSize = static_cast<count_t>(size+1);
     ////////////////////////////////
 
 
-    in_out_t *newActivations = new in_out_t[size+1]; //No need to copy these
-    delete[] weights;
-    delete[] biases;
-    delete[] actiFun;
-    delete[] activations;
+    in_out_t *newActivations;
+    CUDA_CHECK(cudaMallocManaged(&newActivations, sizeof(in_out_t) * (size+1))); //No need to copy these
+    CUDA_CHECK(cudaFree(weights));
+    CUDA_CHECK(cudaFree(biases));
+    CUDA_CHECK(cudaFree(actiFun));
+    CUDA_CHECK(cudaFree(activations));
     weights = newWeights;
     biases = newBiases;
     actiFun = newActiFuns;
     activations = newActivations;
     size++;
 }
+
+__host__
 void LayerV2::removeNeuron(count_t neuronIndex)
 {
     if(size <= 1)
@@ -144,10 +127,14 @@ void LayerV2::removeNeuron(count_t neuronIndex)
         printf("Cannot remove neuron, index out of bounds\n");
         return;
     }
-    weight_t **newWeights = new weight_t*[size-1];
-    in_out_t *newActivations = new in_out_t[size-1]; //No need to copy these
-    weight_t *newBiases = new weight_t[size-1];
-    ActivationFunctionType *newActiFuns = new ActivationFunctionType[size-1];
+    weight_t **newWeights;
+    in_out_t *newActivations;
+    weight_t *newBiases;
+    ActivationFunctionType *newActiFuns;
+    CUDA_CHECK(cudaMallocManaged(&newWeights, sizeof(weight_t*) * (size-1)));
+    CUDA_CHECK(cudaMallocManaged(&newActivations, sizeof(in_out_t) * (size-1))); //No need to copy these
+    CUDA_CHECK(cudaMallocManaged(&newBiases, sizeof(weight_t) * (size-1)));
+    CUDA_CHECK(cudaMallocManaged(&newActiFuns, sizeof(ActivationFunctionType) * (size-1)));
     count_t newIndex = 0;
     for(count_t i = 0; i < size; i++) //iterate over every old neuron
     {
@@ -161,7 +148,8 @@ void LayerV2::removeNeuron(count_t neuronIndex)
     //fix connections of next layer
     for(count_t neuron = 0; neuron < next->size; neuron++)
     {
-        weight_t *nextLayerNewWeights = new weight_t[size-1];
+        weight_t *nextLayerNewWeights;
+        CUDA_CHECK(cudaMallocManaged(&nextLayerNewWeights, sizeof(weight_t) * (size-1)));
         count_t newWeightIndex = 0;
         for(count_t conn = 0; conn < this->size; conn++)
         {
@@ -169,7 +157,7 @@ void LayerV2::removeNeuron(count_t neuronIndex)
             nextLayerNewWeights[newWeightIndex] = next->weights[neuron][conn];
             newWeightIndex++;
         }
-        delete[] next->weights[neuron];
+        CUDA_CHECK(cudaFree(next->weights[neuron]));
         next->weights[neuron] = nextLayerNewWeights;
     }
     next->prevLayerSize = static_cast<count_t>(size-1);
@@ -179,102 +167,45 @@ void LayerV2::removeNeuron(count_t neuronIndex)
     {
         printf("Error\n");
     }
-    delete[] weights;
-    delete[] biases;
-    delete[] actiFun;
-    delete[] activations;
+    CUDA_CHECK(cudaFree(weights));
+    CUDA_CHECK(cudaFree(biases));
+    CUDA_CHECK(cudaFree(actiFun));
+    CUDA_CHECK(cudaFree(activations));
     weights = newWeights;
     biases = newBiases;
     actiFun = newActiFuns;
     activations = newActivations;
     size--;
 }
-void LayerV2::mutate(weight_t mutationRate)
-{
-    //to leave the chance that the layer does not mutate at all, we do modulo n+1
-    uint8_t mutationSpecifier; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
-    if(next == nullptr) 
-    {
-        mutationSpecifier = 2; //if current layer is output layer, force only changing the weights
-    }
-    else
-    {
-        mutationSpecifier = uint8_t(rand() % 4); // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
-    }
-    switch (mutationSpecifier)
-    {
-        case 0: // add neuron
-            addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
-            break;
-        case 1: // remove neuron
-            removeNeuron(count_t(rand() % size));
-            break;
-        case 2: // change connection
-        {
-            count_t neuronSpecifier = count_t(rand() % size);
-            count_t connectionSpecifier = count_t(rand() % prevLayerSize);
-            weight_t weightchange = ((weight_t)rand() / (weight_t)RAND_MAX - (weight_t)0.5) * mutationRate;
-            weights[neuronSpecifier][connectionSpecifier] += weightchange;
-            break;
-        }
-        case 3: //change activation function
-        {
-            count_t neuronSpecifier = count_t(rand() % size);
-            ActivationFunctionType newActivationfunction = (ActivationFunctionType)(rand() % ActivationFunctionType::NONE);
-            actiFun[neuronSpecifier] = newActivationfunction;
-            break;
-        }
-        case 4: //change bias
-        {
-            count_t neuronSpecifier = count_t(rand() % size);
-            weight_t weightchange = ((weight_t)rand() / (weight_t)RAND_MAX - (weight_t)0.5) * mutationRate;
-            biases[neuronSpecifier] += weightchange;
-            break;
-        }
-        default:
-            break;
-    }
-}
 
-#ifdef useGPU
+__host__
 void LayerV2::feedThrough(in_out_t *inputs, cudaStream_t stream)
-#else
-void LayerV2::feedThrough(in_out_t *inputs)
-#endif
 {
-    #ifdef useGPU
     if(prevLayerSize > 0)
     {
-        // feedThroughGPU<<<1, size, 0, stream>>>(this, inputs, sizeOfLastLayer);
-        feedThroughGPU<<<1, size>>>(this, inputs);
-        cudaError_t ret = cudaDeviceSynchronize();
-        if(ret != cudaError::cudaSuccess)
-        {
-            printf("Layer: cudaDeviceSynchronize failed with code %d\n", ret);
-            exit(1);
+        int deviceCount = 0;
+        cudaStream_t currentInstance;
+        cudaError_t devErr = cudaGetDeviceCount(&deviceCount);
+        if (devErr == cudaSuccess && deviceCount > 0) {
+            CUDA_CHECK(cudaSetDevice(0));
+            CUDA_CHECK(cudaFree(0)); //initialize GPU
+            CUDA_CHECK(cudaStreamCreate(&currentInstance));
+        } else {
+            CUDA_CHECK(devErr);
         }
+        // CUDA_CHECK(cudaDeviceSynchronize());
+        feedThroughGPU<<<1, size, 0, currentInstance>>>(this->weights, this->biases, inputs, this->activations, this->prevLayerSize, this->actiFun);
+        // CUDA_CHECK(cudaDeviceSynchronize());
+        CUDA_CHECK(cudaStreamSynchronize(currentInstance));
+        CUDA_CHECK(cudaStreamDestroy(currentInstance));
     }
     else 
     {
-    #endif
-    for(count_t i = 0; i < size; i++)
-    {
-        in_out_t weightedSum = 0;
-        if(prevLayerSize > 0) 
+        for(count_t i = 0; i < size; i++)
         {
-            weightedSum = biases[i];
-            for(count_t iWeights = 0; iWeights < prevLayerSize; iWeights++)
-            {
-                weightedSum += inputs[iWeights] * weights[i][iWeights];
-            }
-        }
-        else
-        {
+            in_out_t weightedSum = 0;
             weightedSum = inputs[i];
+            activations[i] = activationFunction(actiFun[i], weightedSum); //make ReLu
         }
-        activations[i] = activationFunction(actiFun[i], weightedSum); //make ReLu
     }
-    #ifdef useGPU
-    }
-    #endif
 }

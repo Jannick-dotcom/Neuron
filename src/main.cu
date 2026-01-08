@@ -29,7 +29,7 @@ int main()
     }
     gettimeofday(&t2, 0);
     double time = (1000000.0*(t2.tv_sec-t1.tv_sec) + t2.tv_usec-t1.tv_usec)/1000.0;
-    printf("Time to generate:  %3.5f ms \n", time/ctPasses);//0.16361ms
+    printf("Time to generate:  %3.5f ms \n", time/ctPasses);
     delete net;
     delete inputs;
 }
