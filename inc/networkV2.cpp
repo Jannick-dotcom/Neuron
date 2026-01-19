@@ -70,6 +70,26 @@ void NetworkV2::exportNetwork(std::string fileName, bool humanReadable)
     file.close();
 }
 
+NetworkV2* NetworkV2::deepCopy() {
+    if (!firstLayer) return nullptr;
+    NetworkV2* copyNet = new NetworkV2();
+
+    LayerV2* current = firstLayer;
+    LayerV2* prevCopy = nullptr;
+
+    while (current) {
+        LayerV2* copyLayer = current->deepCopy();
+        if (!copyNet->firstLayer) copyNet->firstLayer = copyLayer;
+        if (prevCopy) prevCopy->next = copyLayer;
+        prevCopy = copyLayer;
+        current = current->next;
+    }
+
+    copyNet->lastLayer = prevCopy;
+    copyNet->ctLayers = ctLayers;
+    return copyNet;
+}
+
 //Import a network from a file
 void NetworkV2::getConnections(std::string str, LayerV2 *currentLayer)
 {

@@ -22,6 +22,7 @@ public:
     LayerV2(count_t size, count_t prevLayerSize, ActivationFunctionType activationFunction);
     ~LayerV2();
     void exportToFile(std::ofstream &file, bool humanReadable);
+    LayerV2* deepCopy();
     void addNeuron(ActivationFunctionType type);
     void removeNeuron(count_t neuronIndex);
     void mutate(weight_t mutationRate);

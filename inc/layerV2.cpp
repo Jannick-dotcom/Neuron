@@ -223,6 +223,19 @@ void LayerV2::mutate(weight_t mutationRate)
     }
 }
 
+LayerV2* LayerV2::deepCopy() {
+    LayerV2* copy = new LayerV2(size, prevLayerSize, actiFun[0]); // assume all neurons have same activation type
+    for (count_t i = 0; i < size; i++) {
+        if(biases != nullptr) copy->biases[i] = biases[i];
+        if(actiFun != nullptr) copy->actiFun[i] = actiFun[i];
+        for (count_t j = 0; j < prevLayerSize; j++) {
+            if(weights != nullptr && weights[i] != nullptr) copy->weights[i][j] = weights[i][j];
+        }
+    }
+    copy->next = nullptr; // deep copy doesn't automatically link next layer
+    return copy;
+}
+
 void LayerV2::exportToFile(std::ofstream &file, bool humanReadable)
 {
     for (count_t i = 0; i < size; i++)
