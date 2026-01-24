@@ -24,7 +24,7 @@ if(CMAKE_CUDA_COMPILER)
      )
      add_library(Neuron_Cuda STATIC ${NEURON_CUDA_SRC} ${NEURON_SRC})
      set_target_properties(Neuron_Cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-     set_target_properties(Neuron_Cuda PROPERTIES CUDA_ARCHITECTURES "35;50;72")
+     set_target_properties(Neuron_Cuda PROPERTIES CUDA_ARCHITECTURES native)
      target_include_directories(Neuron_Cuda PUBLIC inc)
      target_compile_definitions(Neuron_Cuda PUBLIC -DuseGPU)
      target_compile_options(Neuron_Cuda PUBLIC -g)  # Enable debugging symbols
