@@ -265,9 +265,16 @@ void LayerV2::exportToFile(std::ofstream &file, bool humanReadable)
         }
         if(biases != nullptr)
         {
-            uint64_t iWeight;
-            memcpy(&iWeight, &(biases[i]), sizeof(biases[i]));
-            file << ", " << iWeight; //last weight is always a bias
+            if(!humanReadable)
+            {
+               uint64_t iWeight;
+               memcpy(&iWeight, &(biases[i]), sizeof(biases[i]));
+               file << ", " << iWeight; //last weight is always a bias
+            }
+            else
+            {
+                file << ", " << biases[i];
+            } 
         }
         file << "\n";
     }
