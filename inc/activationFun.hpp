@@ -2,19 +2,30 @@
 #define activationFun_h
 
 #include <cmath>
+#include <array>
 #include "neuronTypes.hpp"
 #ifdef useGPU
 #include <cuda_runtime.h>
 #endif
 
 typedef enum {
-    LINEAR,
+    LINEAR = 0,
     SIGMOID,
     TANH,
     RELU,
     LEAKYRELU,
-    NONE
+    NONE,
+    COUNT
 } ActivationFunctionType;
+
+constexpr std::array<const char*, static_cast<size_t>(ActivationFunctionType::COUNT)> activationFunctionName = {
+    "LINEAR",
+    "SIGMOID",
+    "TANH",
+    "RELU",
+    "LEAKYRELU",
+    "NONE"
+};
 
 #ifdef useGPU
 __host__ __device__ 

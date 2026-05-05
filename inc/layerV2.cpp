@@ -242,9 +242,9 @@ void LayerV2::exportToFile(std::ofstream &file, bool humanReadable)
     {
         if(actiFun[i] < NONE)
         {
-            file << actiFun[i];
+            humanReadable ? file << activationFunctionName[i] : file << actiFun[i];
         }
-        else if(actiFun[i] > NONE)
+        else if(actiFun[i] >= NONE)
         {
             printf("ERROR Neuron Type: %d", actiFun[i]);
             throw std::system_error();
