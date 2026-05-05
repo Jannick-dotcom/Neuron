@@ -242,7 +242,7 @@ void LayerV2::exportToFile(std::ofstream &file, bool humanReadable)
     {
         if(actiFun[i] < NONE)
         {
-            humanReadable ? file << activationFunctionName[i] : file << actiFun[i];
+            humanReadable ? file << activationFunctionName[actiFun[i]] : file << actiFun[i];
         }
         else if(actiFun[i] >= NONE)
         {
