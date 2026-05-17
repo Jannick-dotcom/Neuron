@@ -70,7 +70,7 @@ void NetworkV2::exportNetwork(std::string fileName, bool humanReadable)
     file.close();
 }
 
-NetworkV2* NetworkV2::deepCopy() {
+NetworkV2* NetworkV2::deepCopy() const {
     if (!firstLayer) return nullptr;
     NetworkV2* copyNet = new NetworkV2();
 

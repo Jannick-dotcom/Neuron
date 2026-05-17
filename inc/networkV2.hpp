@@ -25,7 +25,7 @@ public:
     LayerV2 *addLayer(count_t size, ActivationFunctionType activationFunction);
     void feedThrough(in_out_t *inputs);
     void exportNetwork(std::string fileName, bool humanReadable = false);
-    NetworkV2* deepCopy();
+    NetworkV2* deepCopy() const;
     //Import a network from a file
     void getConnections(std::string str, LayerV2 *currentLayer);
     LayerV2 *parseLayer(std::string str);

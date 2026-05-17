@@ -179,24 +179,30 @@ void LayerV2::feedThrough(in_out_t *inputs)
 void LayerV2::mutate(weight_t mutationRate)
 {
     //to leave the chance that the layer does not mutate at all, we do modulo n+1
-    uint8_t mutationSpecifier; // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
-    if(next == nullptr) 
-    {
-        mutationSpecifier = 2; //if current layer is output layer, force only changing the weights
-    }
-    else
-    {
-        mutationSpecifier = uint8_t(rand() % 4); // 0 = add neuron, 1 = remove neuron, 2 = change connection 3 = change activation function
-    }
+    uint8_t mutationSpecifier;
+    mutationSpecifier = uint8_t(rand() % 4);
     switch (mutationSpecifier)
     {
         case 0: // add neuron
-            addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
-            break;
+            if(next != nullptr && this->weights != nullptr)
+            {
+                addNeuron((ActivationFunctionType)(rand() % ActivationFunctionType::NONE));
+                break;
+            }
         case 1: // remove neuron
-            removeNeuron(count_t(rand() % size));
+            if(next != nullptr && this->weights != nullptr)
+            {
+                removeNeuron(count_t(rand() % size));
+                break;
+            }
+        case 2: //change bias
+        {
+            count_t neuronSpecifier = count_t(rand() % size);
+            weight_t weightchange = ((weight_t)rand() / (weight_t)RAND_MAX - (weight_t)0.5) * mutationRate;
+            biases[neuronSpecifier] += weightchange;
             break;
-        case 2: // change connection
+        }
+        case 3: // change weight
         {
             count_t neuronSpecifier = count_t(rand() % size);
             count_t connectionSpecifier = count_t(rand() % prevLayerSize);
@@ -204,20 +210,17 @@ void LayerV2::mutate(weight_t mutationRate)
             weights[neuronSpecifier][connectionSpecifier] += weightchange;
             break;
         }
-        case 3: //change activation function
+        case 4: //change activation function
         {
-            count_t neuronSpecifier = count_t(rand() % size);
-            ActivationFunctionType newActivationfunction = (ActivationFunctionType)(rand() % ActivationFunctionType::NONE);
-            actiFun[neuronSpecifier] = newActivationfunction;
-            break;
+            if(next != nullptr)
+            {
+                count_t neuronSpecifier = count_t(rand() % size);
+                ActivationFunctionType newActivationfunction = (ActivationFunctionType)(rand() % ActivationFunctionType::NONE);
+                actiFun[neuronSpecifier] = newActivationfunction;
+                break;
+            }
         }
-        case 4: //change bias
-        {
-            count_t neuronSpecifier = count_t(rand() % size);
-            weight_t weightchange = ((weight_t)rand() / (weight_t)RAND_MAX - (weight_t)0.5) * mutationRate;
-            biases[neuronSpecifier] += weightchange;
-            break;
-        }
+        
         default:
             break;
     }
@@ -273,7 +276,7 @@ void LayerV2::exportToFile(std::ofstream &file, bool humanReadable)
             }
             else
             {
-                file << ", " << biases[i];
+                file << ", Bias: " << biases[i];
             } 
         }
         file << "\n";
