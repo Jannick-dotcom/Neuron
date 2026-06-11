@@ -6,7 +6,7 @@
 #include "cudaErrorHandler.hpp"
 
 #ifdef useGPU
-__global__ extern void feedThroughGPU(weight_t **weights, weight_t *biases, in_out_t *inputs, in_out_t *activations, count_t prevLayerSize, ActivationFunctionType *actiFun);
+__global__ extern void feedThroughGPU(count_t size, weight_t **weights, weight_t *biases, in_out_t *inputs, in_out_t *activations, count_t prevLayerSize, ActivationFunctionType *actiFun);
 #endif
 
 __host__
@@ -183,21 +183,17 @@ void LayerV2::feedThrough(in_out_t *inputs, cudaStream_t stream)
 {
     if(prevLayerSize > 0)
     {
-        int deviceCount = 0;
-        cudaStream_t currentInstance;
-        cudaError_t devErr = cudaGetDeviceCount(&deviceCount);
-        if (devErr == cudaSuccess && deviceCount > 0) {
-            CUDA_CHECK(cudaSetDevice(0));
-            CUDA_CHECK(cudaFree(0)); //initialize GPU
-            CUDA_CHECK(cudaStreamCreate(&currentInstance));
-        } else {
-            CUDA_CHECK(devErr);
+        if(size == 0) 
+        {
+            printf("Layer size invalid\n");
+            throw "Layer size invalid";
+            return;
         }
-        // CUDA_CHECK(cudaDeviceSynchronize());
-        feedThroughGPU<<<1, size, 0, currentInstance>>>(this->weights, this->biases, inputs, this->activations, this->prevLayerSize, this->actiFun);
-        // CUDA_CHECK(cudaDeviceSynchronize());
-        CUDA_CHECK(cudaStreamSynchronize(currentInstance));
-        CUDA_CHECK(cudaStreamDestroy(currentInstance));
+        int threads = 256;
+        int blocks = (size + threads - 1) / threads;
+        feedThroughGPU<<<blocks, threads, 0, stream>>>(this->size, this->weights, this->biases, inputs, this->activations, this->prevLayerSize, this->actiFun);
+        // CUDA_CHECK(cudaGetLastError());
+        // CUDA_CHECK(cudaStreamSynchronize(stream));
     }
     else 
     {

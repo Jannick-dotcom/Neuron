@@ -9,6 +9,7 @@ NetworkV2::NetworkV2()
     ctLayers = 0;
 
     currentInstance = 0;
+    CUDA_CHECK(cudaStreamCreate(&currentInstance));
 }
 
 NetworkV2::~NetworkV2()
@@ -20,6 +21,8 @@ NetworkV2::~NetworkV2()
         delete currentLayer;
         currentLayer = nextLayer;
     }
+    CUDA_CHECK(cudaStreamSynchronize(currentInstance));
+    CUDA_CHECK(cudaStreamDestroy(currentInstance));
 }
 
 LayerV2 *NetworkV2::addLayer(count_t size, ActivationFunctionType activationFunction)
@@ -42,9 +45,6 @@ LayerV2 *NetworkV2::addLayer(count_t size, ActivationFunctionType activationFunc
 
 void NetworkV2::feedThrough(in_out_t *inputs)
 {
-    // in_out_t *tempinputs;
-    // CUDA_CHECK(cudaMallocManaged(&tempinputs, sizeof(in_out_t) * firstLayer->size));
-    // CUDA_CHECK(cudaMemcpy(tempinputs, inputs, sizeof(in_out_t) * firstLayer->size, cudaMemcpyHostToDevice));
     LayerV2 *currentLayer = firstLayer;
     in_out_t *outputsOfLastLayer = inputs;
     while(currentLayer != nullptr)
