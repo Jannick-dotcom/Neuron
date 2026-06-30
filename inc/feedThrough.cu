@@ -54,16 +54,15 @@ in_out_t activationFunctionDerivative(ActivationFunctionType type, in_out_t inpu
     }
 }
 
-__global__ void feedThroughGPU(count_t size, weight_t **weights, weight_t *biases, in_out_t *inputs, in_out_t *activations, count_t prevLayerSize, ActivationFunctionType *actiFun)
+__global__ void feedThroughGPU(count_t size, weight_t *weights, weight_t *biases, in_out_t *inputs, in_out_t *activations, count_t prevLayerSize, ActivationFunctionType *actiFun)
 {
     count_t row = blockDim.x*blockIdx.x + threadIdx.x;
     if (row >= size)
         return;
-    in_out_t weightedSum = 0;
-    weightedSum = biases[row];
+    in_out_t weightedSum = biases[row];
     for(count_t iWeights = 0; iWeights < prevLayerSize; iWeights++)
     {
-        weightedSum += inputs[iWeights] * weights[row][iWeights];
+        weightedSum += inputs[iWeights] * weights[row * prevLayerSize + iWeights];
     }
     activations[row] = activationFunction(actiFun[row], weightedSum); //make ReLu
 }

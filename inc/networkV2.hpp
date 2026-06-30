@@ -8,7 +8,7 @@
 
 #ifdef useGPU
 #include <cuda_runtime.h>
-__global__ extern void feedThroughGPU(weight_t **weights, weight_t *biases, in_out_t *inputs, in_out_t *activations, count_t prevLayerSize, ActivationFunctionType *actiFun);
+__global__ extern void feedThroughGPU(count_t size, weight_t *weights, weight_t *biases, in_out_t *inputs, in_out_t *activations, count_t prevLayerSize, ActivationFunctionType *actiFun);
 #endif
 
 class NetworkV2

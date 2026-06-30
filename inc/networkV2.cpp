@@ -128,7 +128,7 @@ void NetworkV2::getConnections(std::string str, LayerV2 *currentLayer)
             }
             else //if normal connection
             {
-                currentLayer->weights[currentNeuron][connectionIndex] = weightValfloat;
+                currentLayer->weights[currentNeuron * currentLayer->prevLayerSize + connectionIndex] = weightValfloat;
             }
             connectionIndex++;
             globalStart = end;

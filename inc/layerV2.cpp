@@ -14,13 +14,12 @@ LayerV2::LayerV2(count_t size, count_t prevLayerSize, ActivationFunctionType act
     }
     if(prevLayerSize > 0)
     {
-        weights = new weight_t*[size];
+        weights = new weight_t[size * prevLayerSize];
         for(count_t i = 0; i < size; i++)
         {
-            weights[i] = new weight_t[prevLayerSize];
             for(count_t j = 0; j < prevLayerSize; j++)
             {
-                weights[i][j] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
+                weights[i * prevLayerSize + j] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
             }
         }
         biases = new weight_t[size];
@@ -38,10 +37,6 @@ LayerV2::~LayerV2()
 {
     if(prevLayerSize > 0)
     {
-        for(count_t i = 0; i < size; i++)
-        {
-            if (weights[i] != NULL) delete[] weights[i];
-        }
         if (weights != NULL) delete[] weights;
         if (biases != NULL) delete[] biases;
     }
@@ -51,40 +46,48 @@ LayerV2::~LayerV2()
 
 void LayerV2::addNeuron(ActivationFunctionType type)
 {
-    weight_t **newWeights = new weight_t*[size+1];
+    weight_t *newWeights = nullptr;
     weight_t *newBiases = new weight_t[size+1];
     ActivationFunctionType *newActiFuns = new ActivationFunctionType[size+1];
     for(count_t i = 0; i < size; i++) //iterate over every old neuron
     {
-        newWeights[i] = weights[i];
         newBiases[i] = biases[i];
         newActiFuns[i] = actiFun[i];
     }
-    newWeights[size] = new weight_t[prevLayerSize];
-
-    for(count_t conn = 0; conn < prevLayerSize; conn++)
+    if(prevLayerSize > 0)
     {
-        newWeights[size][conn] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
+        newWeights = new weight_t[(size+1) * prevLayerSize];
+        for(count_t i = 0; i < size; i++)
+        {
+            for(count_t conn = 0; conn < prevLayerSize; conn++)
+            {
+                newWeights[i * prevLayerSize + conn] = weights[i * prevLayerSize + conn];
+            }
+        }
+        for(count_t conn = 0; conn < prevLayerSize; conn++)
+        {
+            newWeights[size * prevLayerSize + conn] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
+        }
     }
-
     newBiases[size] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
     newActiFuns[size] = type;
 
     //fix connections of next layer
-    for(count_t neuron = 0; neuron < next->size; neuron++)
+    if(next != nullptr)
     {
-        weight_t *nextLayerNewWeights = new weight_t[size+1];
-        for(count_t conn = 0; conn < this->size; conn++)
+        weight_t *nextLayerNewWeights = new weight_t[next->size * (size+1)];
+        for(count_t neuron = 0; neuron < next->size; neuron++)
         {
-            nextLayerNewWeights[conn] = next->weights[neuron][conn];
+            for(count_t conn = 0; conn < this->size; conn++)
+            {
+                nextLayerNewWeights[neuron * (size+1) + conn] = next->weights[neuron * this->size + conn];
+            }
+            nextLayerNewWeights[neuron * (size+1) + this->size] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
         }
-        nextLayerNewWeights[this->size] = weight_t(rand()) / weight_t(RAND_MAX) - weight_t(0.5);
-        delete[] next->weights[neuron];
-        next->weights[neuron] = nextLayerNewWeights;
+        delete[] next->weights;
+        next->weights = nextLayerNewWeights;
+        next->prevLayerSize = static_cast<count_t>(size+1);
     }
-    next->prevLayerSize = static_cast<count_t>(size+1);
-    ////////////////////////////////
-
 
     in_out_t *newActivations = new in_out_t[size+1]; //No need to copy these
     delete[] weights;
@@ -109,7 +112,7 @@ void LayerV2::removeNeuron(count_t neuronIndex)
         printf("Cannot remove neuron, index out of bounds\n");
         return;
     }
-    weight_t **newWeights = new weight_t*[size-1];
+    weight_t *newWeights = nullptr;
     in_out_t *newActivations = new in_out_t[size-1]; //No need to copy these
     weight_t *newBiases = new weight_t[size-1];
     ActivationFunctionType *newActiFuns = new ActivationFunctionType[size-1];
@@ -117,32 +120,48 @@ void LayerV2::removeNeuron(count_t neuronIndex)
     for(count_t i = 0; i < size; i++) //iterate over every old neuron
     {
         if(i == neuronIndex) continue;
-        newWeights[newIndex] = weights[i];
         newBiases[newIndex] = biases[i];
         newActiFuns[newIndex] = actiFun[i];
         newIndex++;
     }
+    if(prevLayerSize > 0)
+    {
+        newWeights = new weight_t[(size-1) * prevLayerSize];
+        count_t newRow = 0;
+        for(count_t i = 0; i < size; i++)
+        {
+            if(i == neuronIndex) continue;
+            for(count_t conn = 0; conn < prevLayerSize; conn++)
+            {
+                newWeights[newRow * prevLayerSize + conn] = weights[i * prevLayerSize + conn];
+            }
+            newRow++;
+        }
+    }
 
     //fix connections of next layer
-    for(count_t neuron = 0; neuron < next->size; neuron++)
+    if(next != nullptr)
     {
-        weight_t *nextLayerNewWeights = new weight_t[size-1];
-        count_t newWeightIndex = 0;
-        for(count_t conn = 0; conn < this->size; conn++)
+        weight_t *nextLayerNewWeights = new weight_t[next->size * (size-1)];
+        for(count_t neuron = 0; neuron < next->size; neuron++)
         {
-            if(conn == neuronIndex) continue;
-            nextLayerNewWeights[newWeightIndex] = next->weights[neuron][conn];
-            newWeightIndex++;
+            count_t newWeightIndex = 0;
+            for(count_t conn = 0; conn < this->size; conn++)
+            {
+                if(conn == neuronIndex) continue;
+                nextLayerNewWeights[neuron * (size-1) + newWeightIndex] = next->weights[neuron * this->size + conn];
+                newWeightIndex++;
+            }
         }
-        delete[] next->weights[neuron];
-        next->weights[neuron] = nextLayerNewWeights;
+        delete[] next->weights;
+        next->weights = nextLayerNewWeights;
+        next->prevLayerSize = static_cast<count_t>(size-1);
     }
-    next->prevLayerSize = static_cast<count_t>(size-1);
     ////////////////////////////////
 
     if(weights == nullptr || biases == nullptr || actiFun == nullptr || activations == nullptr)
     {
-        printf("Bitch\n");
+        printf("Error\n");
     }
     delete[] weights;
     delete[] biases;
@@ -164,7 +183,7 @@ void LayerV2::feedThrough(in_out_t *inputs)
             weightedSum = biases[i];
             for(count_t iWeights = 0; iWeights < prevLayerSize; iWeights++)
             {
-                weightedSum += inputs[iWeights] * weights[i][iWeights];
+                weightedSum += inputs[iWeights] * weights[i * prevLayerSize + iWeights];
             }
         }
         else
@@ -207,7 +226,7 @@ void LayerV2::mutate(weight_t mutationRate)
             count_t neuronSpecifier = count_t(rand() % size);
             count_t connectionSpecifier = count_t(rand() % prevLayerSize);
             weight_t weightchange = ((weight_t)rand() / (weight_t)RAND_MAX - (weight_t)0.5) * mutationRate;
-            weights[neuronSpecifier][connectionSpecifier] += weightchange;
+            weights[neuronSpecifier * prevLayerSize + connectionSpecifier] += weightchange;
             break;
         }
         case 4: //change activation function
@@ -232,7 +251,7 @@ LayerV2* LayerV2::deepCopy() {
         if(biases != nullptr) copy->biases[i] = biases[i];
         if(actiFun != nullptr) copy->actiFun[i] = actiFun[i];
         for (count_t j = 0; j < prevLayerSize; j++) {
-            if(weights != nullptr && weights[i] != nullptr) copy->weights[i][j] = weights[i][j];
+            if(weights != nullptr) copy->weights[i * prevLayerSize + j] = weights[i * prevLayerSize + j];
         }
     }
     copy->next = nullptr; // deep copy doesn't automatically link next layer
@@ -258,12 +277,12 @@ void LayerV2::exportToFile(std::ofstream &file, bool humanReadable)
             if(!humanReadable)
             {
                 uint64_t iWeight;
-                memcpy(&iWeight, &(weights[i][c]), sizeof(weights[i][c]));
+                memcpy(&iWeight, &(weights[i * prevLayerSize + c]), sizeof(weights[i * prevLayerSize + c]));
                 file << ", " << iWeight;
             }
             else
             {
-                file << ", " << weights[i][c];
+                file << ", " << weights[i * prevLayerSize + c];
             }
         }
         if(biases != nullptr)

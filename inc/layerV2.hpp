@@ -13,7 +13,7 @@ class LayerV2
 {
 public:
     LayerV2 *next;
-    weight_t **weights; //incoming weights
+    weight_t *weights; //incoming weights stored as [neuron * prevLayerSize + inputIndex]
     weight_t *biases; //incoming biases
     ActivationFunctionType *actiFun; //activation functions
     in_out_t *activations; //current activations
@@ -27,7 +27,7 @@ public:
     void removeNeuron(count_t neuronIndex);
     void mutate(weight_t mutationRate);
     #ifdef useGPU
-    __global__ friend void feedThroughGPU(weight_t **weights, weight_t *biases, in_out_t *inputs, in_out_t *activations, count_t prevLayerSize, ActivationFunctionType *actiFun);
+    __global__ friend void feedThroughGPU(count_t size, weight_t *weights, weight_t *biases, in_out_t *inputs, in_out_t *activations, count_t prevLayerSize, ActivationFunctionType *actiFun);
     #endif
 
     #ifdef useGPU
