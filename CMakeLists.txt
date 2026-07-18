@@ -6,7 +6,7 @@ file(GLOB NEURON_SRC
 add_library(Neuron STATIC ${NEURON_SRC})
 
 target_include_directories(Neuron PUBLIC inc)
-target_compile_options(Neuron PUBLIC -g)  # Enable debugging symbols
+# target_compile_options(Neuron PUBLIC -g)  # Enable debugging symbols
 
 ##############################################################################
 # CUDA part for Neuron library
@@ -27,7 +27,8 @@ if(CMAKE_CUDA_COMPILER)
      set_target_properties(Neuron_Cuda PROPERTIES CUDA_ARCHITECTURES native)
      target_include_directories(Neuron_Cuda PUBLIC inc)
      target_compile_definitions(Neuron_Cuda PUBLIC -DuseGPU)
-     target_compile_options(Neuron_Cuda PUBLIC -g)  # Enable debugging symbols
+     target_compile_options(Neuron_Cuda PUBLIC -O3)
+     # target_compile_options(Neuron_Cuda PUBLIC -g)  # Enable debugging symbols
 
      set_target_properties(Neuron_Cuda PROPERTIES LINKER_LANGUAGE CUDA)
 endif()
