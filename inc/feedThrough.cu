@@ -3,7 +3,7 @@
 #include "activationFun.hpp"
 
 __host__ __device__ 
-in_out_t activationFunction(ActivationFunctionType type, in_out_t input)
+in_out_t inline activationFunction(ActivationFunctionType type, in_out_t input)
 {
     switch (type)
     {
@@ -29,7 +29,7 @@ in_out_t activationFunction(ActivationFunctionType type, in_out_t input)
     }
 }
 
-in_out_t activationFunctionDerivative(ActivationFunctionType type, in_out_t input)
+in_out_t inline activationFunctionDerivative(ActivationFunctionType type, in_out_t input)
 {
     switch (type)
     {
